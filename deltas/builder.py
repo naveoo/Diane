@@ -1,4 +1,4 @@
-from typing import Set, Dict, List, Optional
+from typing import Optional
 from domains.economy import Resources
 from domains.power import Power
 from domains.region_meta import EnvironmentType, RegionSocioEconomic
@@ -25,7 +25,6 @@ class DeltaBuilder:
         return self
     
     def has_pending_owner_change(self, region_id: str) -> bool:
-        """Checks if a region already has an owner change or is being claimed in this delta."""
         if region_id in self._world_delta.region_deltas:
             if self._world_delta.region_deltas[region_id].owner is not None:
                 return True
@@ -122,15 +121,3 @@ class RegionDeltaBuilder:
     
     def done(self) -> DeltaBuilder:
         return self.parent
-
-
-delta = (DeltaBuilder()
-    .for_faction("empire")
-        .set_power(75.0)
-        .add_region("r1")
-        .done()
-    .for_faction("rebels")
-        .set_power(30.0)
-        .done()
-    .build()
-)

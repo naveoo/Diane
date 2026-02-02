@@ -21,13 +21,11 @@ class FactionDelta:
 
 @dataclass
 class RegionDelta:
-    """Delta pour une région."""
     socio_economic: Optional[RegionSocioEconomic] = None
     stability: Optional[float] = None
     population: Optional[int] = None
-    owner: Optional[str] = None  # None = libération
+    owner: Optional[str] = None
     
-    # Flags
     is_conquered: bool = False
     is_liberated: bool = False
 
@@ -55,31 +53,23 @@ class RegionCreationData:
 
 @dataclass
 class WorldDelta:
-    """Delta global pour le monde."""
     faction_deltas: Dict[str, FactionDelta] = field(default_factory=dict)
     region_deltas: Dict[str, RegionDelta] = field(default_factory=dict)
     
-    # Création/suppression d'entités
     create_factions: Dict[str, FactionCreationData] = field(default_factory=dict)
     create_regions: Dict[str, RegionCreationData] = field(default_factory=dict)
     delete_factions: Set[str] = field(default_factory=set)
     delete_regions: Set[str] = field(default_factory=set)
     
-    # Événements
     events: List[str] = field(default_factory=list)
     delete_regions: Set[str] = field(default_factory=set)
     
-    # Events Log
     events: List[str] = field(default_factory=list)
 
 
 @dataclass
 class DeltaBatch:
-    """
-    Collection de deltas avec métadonnées.
-    Utile pour tracking et debugging.
-    """
     source_system: str
     deltas: WorldDelta
     timestamp: float
-    priority: int = 0  # Pour l'ordre d'application
+    priority: int = 0

@@ -1,7 +1,7 @@
 import logging
 import random
 import uuid
-from engine import SimulationEngine
+from core.engine import SimulationEngine
 from domains.world import World
 from domains.faction import Faction
 from domains.region import Region

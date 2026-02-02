@@ -82,7 +82,6 @@ class DeltaApplier:
                 faction.traits = set(data.traits)
                 world.factions[fid] = faction
                 
-                # Update regions owner
                 for rid in data.regions:
                     region = world.get_region(rid)
                     if region:

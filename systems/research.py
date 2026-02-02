@@ -3,13 +3,6 @@ from deltas.builder import DeltaBuilder
 from .base import BaseSystem
 
 class ResearchSystem(BaseSystem):
-    """
-    Manages technological progress:
-    - Factions spend Influence to gain Knowledge.
-    - Knowledge provides global bonuses (calculated in other systems).
-    - Higher Knowledge levels cost more Influence.
-    """
-    
     def compute_delta(self, world: World, builder: DeltaBuilder) -> None:
         t_cfg = self.config.traits
         
@@ -17,7 +10,6 @@ class ResearchSystem(BaseSystem):
             if not faction.is_active:
                 continue
                 
-            # Base research rate
             research_rate = 1.0
             if "Technocrat" in faction.traits:
                 research_rate *= t_cfg.technocrat_investment_efficiency

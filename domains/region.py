@@ -13,7 +13,6 @@ class Region:
 
     @property
     def stability(self) -> float:
-        """Alias for social cohesion to maintain compatibility with existing systems."""
         return self.socio_economic.cohesion
 
     def __post_init__(self):
@@ -27,12 +26,10 @@ class Region:
     
     def apply_delta(self, delta: 'RegionDelta') -> None:
         if delta.socio_economic is not None:
-            # Merge fields to avoid resetting unmentioned fields
             self.socio_economic.infrastructure = delta.socio_economic.infrastructure
             self.socio_economic.cohesion = delta.socio_economic.cohesion
 
         if delta.stability is not None:
-            # Shortcut to update cohesion (for backward compatibility)
             self.socio_economic.cohesion = delta.stability
             
         if delta.population is not None:

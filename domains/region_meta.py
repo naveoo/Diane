@@ -1,12 +1,12 @@
 from dataclasses import dataclass
-from enum import Enum, auto
+from enum import Enum
 
 class EnvironmentType(Enum):
-    URBAN = "URBAN"           # High credits, high pop capacity
-    RURAL = "RURAL"           # Stable credits, medium pop
-    INDUSTRIAL = "INDUSTRIAL" # High materials, low stability/growth
-    COASTAL = "COASTAL"       # Navy bonus, trade boost
-    WILDERNESS = "WILDERNESS" # Low production, difficult to conquer
+    URBAN = "URBAN"
+    RURAL = "RURAL"
+    INDUSTRIAL = "INDUSTRIAL"
+    COASTAL = "COASTAL"
+    WILDERNESS = "WILDERNESS"
 
     @classmethod
     def from_str(cls, name: str) -> 'EnvironmentType':
@@ -17,8 +17,8 @@ class EnvironmentType(Enum):
 
 @dataclass(slots=True)
 class RegionSocioEconomic:
-    infrastructure: float = 20.0 # 0-100 development level
-    cohesion: float = 100.0       # Replaces stability (0-100)
+    infrastructure: float = 20.0
+    cohesion: float = 100.0
     
     def to_dict(self) -> dict:
         return {

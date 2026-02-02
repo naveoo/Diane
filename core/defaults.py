@@ -191,7 +191,7 @@ class TraitConfig:
     # Militarist
     militarist_power_growth_mod: float = 1.2
     militarist_victory_mod: float = 1.15
-    militarist_upkeep_mod: float = 0.9 # Lower upkeep due to efficiency
+    militarist_upkeep_mod: float = 0.9
     
     # Pacifist
     pacifist_power_growth_mod: float = 0.8
@@ -203,12 +203,12 @@ class TraitConfig:
     industrialist_materials_mod: float = 1.25
     
     # Technocrat
-    technocrat_corruption_mod: float = 0.5 # Halves corruption
+    technocrat_corruption_mod: float = 0.5
     technocrat_investment_efficiency: float = 1.25
     
     # Populist
     populist_inequality_penalty_mod: float = 0.5
-    populist_revolution_threshold_mod: float = 0.7 # Tolerates lower legitimacy
+    populist_revolution_threshold_mod: float = 0.7
     
     # Diplomat
     diplomat_alliance_formation_mod: float = 1.5
@@ -216,12 +216,12 @@ class TraitConfig:
     
     # Imperialist
     imperialist_conquest_cost_mod: float = 0.7
-    imperialist_expansion_penalty_mod: float = 0.8 # Better at managing large empires
+    imperialist_expansion_penalty_mod: float = 0.8
     imperialist_victory_legitimacy_bonus: float = 2.0
 
     # Autocrat
-    autocrat_stability_impact_mod: float = 0.5 # Legitimacy less tied to stability
-    autocrat_coup_chance_mod: float = 2.0 # More prone to military takeovers
+    autocrat_stability_impact_mod: float = 0.5
+    autocrat_coup_chance_mod: float = 2.0
 
 # =========================
 # AGGREGATE CONFIGURATION

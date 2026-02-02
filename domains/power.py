@@ -32,8 +32,6 @@ class Power:
         )
 
     def clamp(self, min_val: float, max_val: float) -> 'Power':
-        # Clamping individual branches to avoid extreme concentrations
-        # while keeping total within bounds is complex, so we clamp branches
         return Power(
             army=max(min_val, min(max_val, self.army)),
             navy=max(min_val, min(max_val, self.navy)),

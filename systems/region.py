@@ -4,13 +4,6 @@ from deltas.builder import DeltaBuilder
 from .base import BaseSystem
 
 class RegionSystem(BaseSystem):
-    """
-    Manages realistic region growth:
-    - Infrastructure development based on stability.
-    - Social Cohesion (replaces stability) recovery.
-    - Population growth influenced by Environment and Infrastructure.
-    """
-    
     def compute_delta(self, world: World, builder: DeltaBuilder) -> None:
         cfg = self.config.region
         
@@ -23,23 +16,18 @@ class RegionSystem(BaseSystem):
                 cohesion=se.cohesion
             )
             
-            # 1. Infrastructure Growth (if peaceful and stable)
             if se.cohesion > 70:
                 infra_growth = 0.1
                 if env == EnvironmentType.URBAN: infra_growth *= 1.5
                 elif env == EnvironmentType.WILDERNESS: infra_growth *= 0.5
                 new_se.infrastructure = min(100.0, se.infrastructure + infra_growth)
             
-            # 2. Cohesion (Stability) Recovery
-            # Better infrastructure helps state control and recovery
             if se.cohesion < 100:
                 recovery = 0.2 + (se.infrastructure / 200.0)
                 new_se.cohesion = min(100.0, se.cohesion + recovery)
             
-            # 3. Population Growth
             new_pop = region.population
             if region.population < cfg.max_population:
-                # Growth rates by environment
                 rates = {
                     EnvironmentType.URBAN: 0.005,
                     EnvironmentType.RURAL: 0.003,
@@ -48,13 +36,10 @@ class RegionSystem(BaseSystem):
                     EnvironmentType.WILDERNESS: 0.001
                 }
                 base_rate = rates.get(env, 0.002)
-                # Boost by infrastructure
                 actual_growth = int(region.population * base_rate * (1 + se.infrastructure / 100.0))
-                # Ensure at least minimal growth if under cap
                 actual_growth = max(actual_growth, 1)
                 new_pop = min(cfg.max_population, region.population + actual_growth)
 
-            # Apply updates if changed
             if new_se != se or new_pop != region.population:
                 rb = builder.for_region(region_id)
                 if new_se != se:

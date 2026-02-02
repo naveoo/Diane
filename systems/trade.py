@@ -3,12 +3,6 @@ from deltas.builder import DeltaBuilder
 from .base import BaseSystem
 
 class TradeSystem(BaseSystem):
-    """
-    Manages resource exchanges between allied or friendly factions.
-    - If Faction A has surplus Energy and Faction B has surplus Food, they swap.
-    - Trade increases both factions' Credits and Legitimacy.
-    """
-    
     def compute_delta(self, world: World, builder: DeltaBuilder) -> None:
         factions = list(world.factions.values())
         
@@ -31,14 +25,12 @@ class TradeSystem(BaseSystem):
         
         trade_occurred = False
         
-        # F1 -> F2 (Energy)
         if res1.energy > cfg.trade_threshold and res2.energy < cfg.trade_shortage_threshold:
             amount = cfg.trade_amount
             res1.energy -= amount
             res2.energy += amount
             trade_occurred = True
             
-        # F2 -> F1 (Food)
         if res2.food > cfg.trade_threshold and res1.food < cfg.trade_shortage_threshold:
             amount = cfg.trade_amount
             res2.food -= amount
@@ -52,4 +44,4 @@ class TradeSystem(BaseSystem):
             builder.for_faction(f1.id).set_resources(res1).set_legitimacy(min(100.0, f1.legitimacy + cfg.trade_legitimacy_bonus))
             builder.for_faction(f2.id).set_resources(res2).set_legitimacy(min(100.0, f2.legitimacy + cfg.trade_legitimacy_bonus))
             
-            builder.add_event(f"🤝 Trade agreement between {f1.name} and {f2.name} is active.")
+            builder.add_event(f"🟡 Trade agreement between {f1.name} and {f2.name} is active.")

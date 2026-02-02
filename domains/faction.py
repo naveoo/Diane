@@ -26,10 +26,8 @@ class Faction:
             raise ValueError(f"Power cannot be negative: {self.power.total}")
         if self.legitimacy < 0:
             raise ValueError(f"Legitimacy cannot be negative: {self.legitimacy}")
-        # Allow negative debt for credits/materials (limited)
         if self.resources.credits < -10000:
-             raise ValueError(f"Bankrupt! Credits too low: {self.resources.credits}")
-        
+            raise ValueError(f"Bankrupt! Credits too low: {self.resources.credits}")
         if self.id in self.alliances:
             raise ValueError(f"Faction {self.id} cannot be allied with itself")
     

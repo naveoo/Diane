@@ -1,21 +1,16 @@
-"""
-Validation des deltas avant application.
-Détecte les incohérences et violations de règles.
-"""
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Any
+from typing import List
 from .types import WorldDelta, FactionDelta, RegionDelta
-if False: # TYPE_CHECKING
+if False:
     from domains.world import World
     from domains.faction import Faction
     from domains.region import Region
 
 @dataclass
 class ValidationError:
-    """Erreur de validation."""
-    severity: str  # "error", "warning", "info"
+    severity: str
     message: str
     entity_id: str
     field: str
@@ -23,33 +18,22 @@ class ValidationError:
 
 
 class DeltaValidator:
-    """Valide les deltas avant application."""
-    
     def __init__(self, config):
         self.config = config
     
     def validate(self, delta: WorldDelta, world: World) -> List[ValidationError]:
-        """
-        Valide un delta contre l'état actuel du monde.
-        
-        Returns:
-            Liste des erreurs trouvées (vide si tout est OK)
-        """
         errors = []
         
-        # Valider les factions
         for faction_id, faction_delta in delta.faction_deltas.items():
             errors.extend(self._validate_faction_delta(
                 faction_id, faction_delta, world
             ))
         
-        # Valider les régions
         for region_id, region_delta in delta.region_deltas.items():
             errors.extend(self._validate_region_delta(
                 region_id, region_delta, world, delta
             ))
         
-        # Valider la cohérence globale
         errors.extend(self._validate_coherence(delta, world))
         
         return errors
@@ -57,7 +41,6 @@ class DeltaValidator:
     def _validate_faction_delta(
         self, faction_id: str, delta: FactionDelta, world: World
     ) -> List[ValidationError]:
-        """Valide un delta de faction."""
         errors = []
         faction = world.get_faction(faction_id)
         
@@ -71,7 +54,6 @@ class DeltaValidator:
             ))
             return errors
         
-        # Valider les bornes
         if delta.power is not None:
             power_val = delta.power.total
             if power_val < self.config.faction.min_power:
@@ -91,7 +73,6 @@ class DeltaValidator:
                     value=power_val
                 ))
         
-        # Valider les régions
         for region_id in delta.add_regions:
             if not world.get_region(region_id):
                 errors.append(ValidationError(
@@ -107,7 +88,6 @@ class DeltaValidator:
     def _validate_region_delta(
         self, region_id: str, delta: RegionDelta, world: World, builder_delta: WorldDelta = None
     ) -> List[ValidationError]:
-        """Valide un delta de région."""
         errors = []
         region = world.get_region(region_id)
         
@@ -132,7 +112,6 @@ class DeltaValidator:
                 ))
         
         if delta.owner:
-            # Check world AND the current delta for newly created factions
             exists_in_world = delta.owner in world.factions
             exists_in_delta = builder_delta and delta.owner in builder_delta.create_factions
             
@@ -150,10 +129,8 @@ class DeltaValidator:
     def _validate_coherence(
         self, delta: WorldDelta, world: World
     ) -> List[ValidationError]:
-        """Valide la cohérence globale du delta."""
         errors = []
         
-        # Vérifier les conflits de propriété de régions
         region_owners = {}
         for faction_id, faction_delta in delta.faction_deltas.items():
             for region_id in faction_delta.add_regions:

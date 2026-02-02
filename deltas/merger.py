@@ -1,15 +1,14 @@
 from enum import Enum
-from typing import List
 from .types import WorldDelta, FactionDelta
 
 class MergeStrategy(Enum):
-    LAST_WINS = "last_wins"           # Le dernier écrase
-    FIRST_WINS = "first_wins"         # Le premier est conservé
-    MAX = "max"                       # Prend la valeur maximale
-    MIN = "min"                       # Prend la valeur minimale
-    AVERAGE = "average"               # Moyenne des valeurs
-    SUM = "sum"                       # Somme (pour deltas relatifs)
-    CUSTOM = "custom"                 # Fonction personnalisée
+    LAST_WINS = "last_wins"
+    FIRST_WINS = "first_wins"
+    MAX = "max"
+    MIN = "min"
+    AVERAGE = "average"
+    SUM = "sum"
+    CUSTOM = "custom"
 
 
 class DeltaMerger:

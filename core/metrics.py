@@ -4,14 +4,8 @@ from domains.world import World
 from domains.faction import Faction
 
 class GeopoliticalMetrics:
-    """
-    Advanced statistical and geopolitical metrics calculator for Diane.
-    Provides world-level and faction-level indicators.
-    """
-
     @staticmethod
     def calculate_all(world: World) -> Dict[str, Any]:
-        """Calculates a full report of world and faction metrics."""
         report = {
             "world": GeopoliticalMetrics.calculate_world_metrics(world),
             "factions": {}
@@ -25,7 +19,6 @@ class GeopoliticalMetrics:
 
     @staticmethod
     def calculate_world_metrics(world: World) -> Dict[str, Any]:
-        """Global indicators of world state."""
         factions = [f for f in world.factions.values() if f.is_active]
         if not factions:
             return {}
@@ -33,11 +26,8 @@ class GeopoliticalMetrics:
         total_power = sum(f.power.total for f in factions)
         power_shares = [f.power.total / (total_power + 0.1) for f in factions]
         
-        # 1. Hegemony Index (HHI - Herfindahl-Hirschman Index)
-        # Sum of squares of shares (0.0 to 1.0). 1.0 = Total Hegemony, 0 = Perfect competition.
         hhi = sum(s**2 for s in power_shares)
         
-        # 2. Power Gini (Inequality)
         sorted_powers = sorted([f.power.total for f in factions])
         n = len(sorted_powers)
         gini = 0
@@ -45,21 +35,15 @@ class GeopoliticalMetrics:
             diff_sum = sum(abs(x - y) for x in sorted_powers for y in sorted_powers)
             gini = diff_sum / (2 * n * sum(sorted_powers))
             
-        # 3. Global Tension Index
-        # Combination of low legitimacy and high military power
         avg_legitimacy = sum(f.legitimacy for f in factions) / n
         tension = (100 - avg_legitimacy) * (hhi * 10) # High hegemony + low legitimacy = high tension
         
-        # 4. Global Development
         regions = list(world.regions.values())
         avg_infra = sum(r.socio_economic.infrastructure for r in regions) / (len(regions) + 0.1)
         avg_knowledge = sum(f.knowledge for f in factions) / n
         
-        # 5. Polarization Index
-        # Number of major alliances clusters (simplified)
         alliances_count = sum(len(f.alliances) for f in factions) / 2
         
-        # 6. Resource Security Index (global)
         total_food = sum(f.resources.food for f in factions)
         total_energy = sum(f.resources.energy for f in factions)
         total_pop = sum(sum(world.get_region(rid).population for rid in f.regions if world.get_region(rid)) for f in factions)
@@ -67,8 +51,6 @@ class GeopoliticalMetrics:
         food_security = (total_food / (total_pop * 0.01 + 1)) * 10  # Ratio to requirement
         energy_security = (total_energy / (total_power * 0.1 + 1)) * 10
         
-        # 7. Diplomatic Fragmentation
-        # How many isolated factions vs connected ones
         isolated_count = sum(1 for f in factions if len(f.alliances) == 0)
         fragmentation = isolated_count / n
         
@@ -88,15 +70,11 @@ class GeopoliticalMetrics:
 
     @staticmethod
     def calculate_faction_metrics(world: World, faction: Faction) -> Dict[str, Any]:
-        """Detailed metrics for a specific faction."""
         res = faction.resources
         p = faction.power
         
-        # 1. Composite Power Index (Knowledge-weighted military)
         cpi = p.total * (1 + (faction.knowledge / 100))
         
-        # 2. Strategic Depth
-        # Ratio of population in secondary regions vs capital (simplified as pop diversity)
         total_pop = 0
         region_pops = []
         for rid in faction.regions:
@@ -107,16 +85,12 @@ class GeopoliticalMetrics:
         
         strategic_depth = 0
         if len(region_pops) > 1:
-            # Entropy-like measure of population distribution
             strategic_depth = sum(-(p/total_pop) * math.log(p/total_pop) for p in region_pops)
 
-        # 3. Economic Complexity
-        # Ability to produce credits/materials per capita
         income_potential = (res.credits + res.materials + res.food + res.energy)
         econ_intensity = income_potential / (total_pop + 1)
         
-        # 4. Support Gap
-        # Legitimacy vs Average regional cohesion
+        support_gap = faction.legitimacy - avg_cohesion
         avg_cohesion = 0
         for rid in faction.regions:
             r = world.get_region(rid)
@@ -125,32 +99,24 @@ class GeopoliticalMetrics:
         
         support_gap = faction.legitimacy - avg_cohesion
 
-        # 5. Military Balance Ratio
-        # Faction's power vs average of all others
         other_factions = [f for f in world.factions.values() if f.is_active and f.id != faction.id]
         avg_other_power = sum(f.power.total for f in other_factions) / (len(other_factions) + 0.1)
         military_balance = p.total / (avg_other_power + 0.1)
         
-        # 6. Resource Security
         food_req = total_pop * 0.01
         energy_req = p.total * 0.1
         food_security = (res.food / (food_req + 1)) * 100
         energy_security = (res.energy / (energy_req + 1)) * 100
         
-        # 7. Diplomatic Influence Score
-        # Based on alliances and relative power
         alliance_strength = sum(world.factions[aid].power.total for aid in faction.alliances if aid in world.factions and world.factions[aid].is_active)
         diplomatic_influence = (len(faction.alliances) * 10) + (alliance_strength / 10)
         
-        # 8. Threat Assessment
-        # How threatened is this faction by neighbors
         threat_level = 0
         for other in other_factions:
-            if faction.id not in other.alliances:  # Not allied
+            if faction.id not in other.alliances:
                 if other.power.total > p.total:
                     threat_level += (other.power.total - p.total) / 10
         
-        # 9. Technological Advantage
         avg_knowledge = sum(f.knowledge for f in world.factions.values() if f.is_active) / len([f for f in world.factions.values() if f.is_active])
         tech_advantage = faction.knowledge - avg_knowledge
         
@@ -184,7 +150,6 @@ class GeopoliticalMetrics:
 
     @staticmethod
     def get_power_rankings(world: World) -> List[Dict[str, Any]]:
-        """Returns factions ranked by composite power."""
         factions = [f for f in world.factions.values() if f.is_active]
         rankings = []
         
@@ -202,7 +167,6 @@ class GeopoliticalMetrics:
     
     @staticmethod
     def get_economic_rankings(world: World) -> List[Dict[str, Any]]:
-        """Returns factions ranked by total economic resources."""
         factions = [f for f in world.factions.values() if f.is_active]
         rankings = []
         
@@ -220,7 +184,6 @@ class GeopoliticalMetrics:
     
     @staticmethod
     def get_stability_rankings(world: World) -> List[Dict[str, Any]]:
-        """Returns factions ranked by legitimacy and cohesion."""
         factions = [f for f in world.factions.values() if f.is_active]
         rankings = []
         
@@ -244,7 +207,6 @@ class GeopoliticalMetrics:
     
     @staticmethod
     def compare_factions(world: World, fid1: str, fid2: str) -> Dict[str, Any]:
-        """Detailed comparison between two factions."""
         f1 = world.factions.get(fid1)
         f2 = world.factions.get(fid2)
         

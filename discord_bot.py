@@ -6,28 +6,25 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from engine import SimulationEngine
+from core.engine import SimulationEngine
 from scenarios import create_demo_scenario, load_scenario_json, world_from_dict, world_to_dict
 from domains.faction import Faction
 from domains.region import Region
 from domains.world import World
+from rules.visualizer import MetricsVisualizer
 
-# Load env variables
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 
-# Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("DiscordBot")
 
-# Bot Setup
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# Simulation State
 engine = SimulationEngine("diane_simulation.db")
-user_drafts = {} # user_id -> World
+user_drafts = {}
 
 @bot.event
 async def on_ready():
@@ -36,7 +33,6 @@ async def on_ready():
 
 @bot.command(name="start")
 async def start_sim(ctx, name: str = "New Session"):
-    """Starts a new simulation session."""
     engine.create_session(name)
     world = create_demo_scenario()
     engine.initialize_world(world)
@@ -44,7 +40,6 @@ async def start_sim(ctx, name: str = "New Session"):
 
 @bot.command(name="step")
 async def step_sim(ctx, ticks: int = 1):
-    """Advances the simulation by N ticks."""
     if not engine.session_id:
         await ctx.send("❌ Error: No session active. Use `!start` first.")
         return
@@ -54,7 +49,6 @@ async def step_sim(ctx, ticks: int = 1):
     events = engine.step(ticks)
     
     if events:
-        # Show last 10 events to avoid spamming
         display_events = events[-10:]
         events_str = "\n".join(display_events)
         if len(events) > 10:
@@ -65,7 +59,6 @@ async def step_sim(ctx, ticks: int = 1):
 
 @bot.command(name="status")
 async def status_sim(ctx):
-    """Shows the current status of the factions."""
     if not engine.world:
         await ctx.send("❌ Error: No world initialized.")
         return
@@ -75,23 +68,19 @@ async def status_sim(ctx):
     
     embeds = []
     
-    # First embed with general info
     main_embed = discord.Embed(title="🌍 Simulation Status", color=discord.Color.blue())
     main_embed.add_field(name="Current Tick", value=str(engine.current_tick), inline=False)
     main_embed.add_field(name="Summary", value=f"Active Factions: {len(active_factions)}\nCollapsed: {collapsed_count}", inline=False)
     embeds.append(main_embed)
     
-    # Split active factions into chunks of 10 to be safe with limits
     faction_chunks = [active_factions[i:i + 10] for i in range(0, len(active_factions), 10)]
     
-    # Only show up to 50 active factions (5 embeds) to avoid spam
     for i, chunk in enumerate(faction_chunks[:5]):
         embed = discord.Embed(title=f"🚩 Active Factions (Part {i+1})", color=discord.Color.green())
         for f in chunk:
             res = f.resources
             p = f.power
             
-            # Geographic Summary
             env_icons = ""
             total_infra = 0.0
             from domains.region_meta import EnvironmentType
@@ -127,7 +116,6 @@ async def status_sim(ctx):
 
 @bot.command(name="metrics")
 async def world_metrics(ctx):
-    """Provides deep geopolitical and statistical analytics of the world."""
     if not engine.world:
         await ctx.send("❌ Error: No session active.")
         return
@@ -135,14 +123,12 @@ async def world_metrics(ctx):
     metrics = engine.get_metrics()
     w = metrics["world"]
     
-    # World Embed
     w_embed = discord.Embed(
         title="📊 Geopolitical Analytics Report", 
         description="Complex world-state analysis and statistical indicators.",
         color=discord.Color.dark_magenta()
     )
     
-    # Structural Indicators
     struct_val = (
         f"**Hegemony (HHI)**: `{w['hegemony_hhi']}`\n"
         f"**Power Gini**: `{w['power_gini']}`\n"
@@ -150,7 +136,6 @@ async def world_metrics(ctx):
     )
     w_embed.add_field(name="⚖️ Structural Stability", value=struct_val, inline=True)
     
-    # Global Dynamics
     dyn_val = (
         f"**Global Tension**: `{w['global_tension']}`\n"
         f"**Avg Legitimacy**: `{w['avg_legitimacy']}`\n"
@@ -158,11 +143,23 @@ async def world_metrics(ctx):
     )
     w_embed.add_field(name="📈 Global Dynamics", value=dyn_val, inline=True)
     
-    # Cultural/Tech
     tech_val = f"**Global Knowledge**: `{w['global_knowledge']}`"
     w_embed.add_field(name="🎓 Advancement", value=tech_val, inline=False)
     
     await ctx.send(embed=w_embed)
+    
+    try:
+        power_chart = MetricsVisualizer.create_power_distribution_chart(engine.world)
+        await ctx.send(file=discord.File(power_chart, 'power_distribution.png'))
+        
+        resource_chart = MetricsVisualizer.create_resource_security_chart(metrics)
+        await ctx.send(file=discord.File(resource_chart, 'resource_security.png'))
+        
+        indicators_chart = MetricsVisualizer.create_world_indicators_chart(metrics)
+        await ctx.send(file=discord.File(indicators_chart, 'world_indicators.png'))
+    except Exception as e:
+        logger.error(f"Chart generation error: {e}")
+        await ctx.send("⚠️ Charts could not be generated.")
     
     f_metrics = metrics["factions"]
     sorted_f = sorted(f_metrics.items(), key=lambda x: x[1]['composite_power_index'], reverse=True)[:3]
@@ -178,7 +175,6 @@ async def world_metrics(ctx):
         )
         f_embed.add_field(name="🌍 Geopolitical Footprint", value=geo_val, inline=True)
         
-        # Socio-Economic
         soc_val = (
             f"**Econ Intensity**: `{m['economic_intensity']}`\n"
             f"**Support Gap**: `{m['support_gap']}`\n"
@@ -220,7 +216,6 @@ async def show_rankings(ctx, category: str = "power"):
 
 @bot.command(name="compare")
 async def compare_factions(ctx, fid1: str, fid2: str):
-    """Compares two factions in detail."""
     if not engine.world:
         await ctx.send("❌ Error: No session active.")
         return
@@ -241,21 +236,18 @@ async def compare_factions(ctx, fid1: str, fid2: str):
         color=discord.Color.red() if not comparison['are_allied'] else discord.Color.green()
     )
     
-    # Power Comparison
     embed.add_field(
         name="💪 Power Ratio",
         value=f"`{comparison['power_ratio']}:1` ({f1['name']} advantage)" if comparison['power_ratio'] > 1 else f"`1:{1/comparison['power_ratio']:.2f}` ({f2['name']} advantage)",
         inline=False
     )
     
-    # Economic Comparison
     embed.add_field(
         name="💰 Wealth Ratio",
         value=f"`{comparison['wealth_ratio']}:1`",
         inline=False
     )
     
-    # Key Metrics Side-by-Side
     m1 = f1['metrics']
     m2 = f2['metrics']
     
@@ -275,7 +267,6 @@ async def compare_factions(ctx, fid1: str, fid2: str):
 
 @bot.command(name="load")
 async def load_sim(ctx, session_id: str):
-    """Loads an existing session."""
     try:
         engine.load_session(session_id)
         await ctx.send(f"📂 Loaded session `{session_id}` at tick **{engine.current_tick}**.")
@@ -284,13 +275,11 @@ async def load_sim(ctx, session_id: str):
 
 @bot.command(name="new_scenario")
 async def new_scenario(ctx):
-    """Initializes a new empty draft scenario."""
     user_drafts[ctx.author.id] = World(factions={}, regions={})
     await ctx.send("🆕 New draft scenario created! Use `!add_faction` and `!add_region` to build it.")
 
 @bot.command(name="capture_draft")
 async def capture_draft(ctx):
-    """Captures the current active simulation world into your draft."""
     if not engine.world:
         await ctx.send("❌ Error: No active simulation to capture.")
         return
@@ -301,7 +290,6 @@ async def capture_draft(ctx):
 
 @bot.command(name="add_faction")
 async def add_faction(ctx, fid: str, name: str, power: float = 50.0, legitimacy: float = 50.0, resources: float = 50.0, *traits: str):
-    """Adds a faction to your draft scenario."""
     if ctx.author.id not in user_drafts:
         await ctx.send("❌ Error: Use `!new_scenario` first.")
         return
@@ -322,7 +310,6 @@ async def add_faction(ctx, fid: str, name: str, power: float = 50.0, legitimacy:
 
 @bot.command(name="add_region")
 async def add_region(ctx, rid: str, name: str, owner_id: str = None, env_type: str = "RURAL", infra: float = 20.0):
-    """Adds a region to your draft scenario."""
     if ctx.author.id not in user_drafts:
         await ctx.send("❌ Error: Use `!new_scenario` first.")
         return
@@ -341,7 +328,6 @@ async def add_region(ctx, rid: str, name: str, owner_id: str = None, env_type: s
 
 @bot.command(name="traits")
 async def list_traits(ctx):
-    """Lists available faction traits."""
     traits = [
         "Militarist", "Pacifist", "Industrialist", "Technocrat", 
         "Populist", "Diplomat", "Imperialist", "Autocrat"
@@ -350,7 +336,6 @@ async def list_traits(ctx):
 
 @bot.command(name="start_custom")
 async def start_custom(ctx, name: str = "Custom Session"):
-    """Starts a session with your custom draft."""
     if ctx.author.id not in user_drafts:
         await ctx.send("❌ Error: No draft found. Use `!new_scenario` or `!upload_scenario`.")
         return
@@ -366,7 +351,6 @@ async def start_custom(ctx, name: str = "Custom Session"):
 
 @bot.command(name="upload_scenario")
 async def upload_scenario(ctx):
-    """Starts a session from an uploaded JSON file."""
     if not ctx.message.attachments:
         await ctx.send("❌ Error: Please attach a `.json` scenario file.")
         return
@@ -393,7 +377,6 @@ async def upload_scenario(ctx):
 
 @bot.command(name="view_draft")
 async def view_draft(ctx):
-    """Shows the current draft scenario."""
     if ctx.author.id not in user_drafts:
         await ctx.send("❌ Error: No draft found.")
         return
@@ -411,7 +394,6 @@ async def view_draft(ctx):
 
 @bot.command(name="assign_region")
 async def assign_region(ctx, rid: str, fid: str):
-    """Assigns an existing region to a faction in your draft scenario."""
     if ctx.author.id not in user_drafts:
         await ctx.send("❌ Error: Use `!new_scenario` first.")
         return
@@ -424,16 +406,66 @@ async def assign_region(ctx, rid: str, fid: str):
         await ctx.send(f"❌ Error: Faction `{fid}` not found in draft.")
         return
     
-    # Remove from old owner if any
     old_owner = draft.regions[rid].owner
     if old_owner and old_owner in draft.factions:
         draft.factions[old_owner].regions.discard(rid)
         
-    # Assign new owner
     draft.regions[rid].owner = fid
     draft.factions[fid].regions.add(rid)
     
     await ctx.send(f"✅ Region **{draft.regions[rid].name}** assigned to **{draft.factions[fid].name}**.")
+
+@bot.command(name="history")
+async def show_history(ctx):
+    if not engine.session_id:
+        await ctx.send("❌ Error: No session active.")
+        return
+    
+    await ctx.send("📊 Generating historical charts... This may take a moment.")
+    
+    try:
+        snapshots = engine.persistence.get_all_snapshots(engine.session_id)
+        
+        if len(snapshots) < 2:
+            await ctx.send("❌ Not enough historical data. Run more ticks first.")
+            return
+        
+        historical_data = []
+        for tick, world_json in snapshots:
+            world_data = json.loads(world_json)
+            
+            factions_dict = {}
+            for fid, f_data in world_data['factions'].items():
+                power_total = f_data['power'].get('army', 0) + f_data['power'].get('navy', 0) + f_data['power'].get('air', 0)
+                factions_dict[fid] = {
+                    'name': f_data['name'],
+                    'color': f_data.get('color', '#808080'),
+                    'power': power_total,
+                    'legitimacy': f_data.get('legitimacy', 50),
+                    'resources': f_data.get('resources', {}),
+                    'is_active': f_data.get('is_active', True)
+                }
+            
+            historical_data.append({
+                'tick': tick,
+                'factions': factions_dict
+            })
+        
+        power_chart = MetricsVisualizer.create_power_evolution_chart(historical_data)
+        await ctx.send(file=discord.File(power_chart, 'power_evolution.png'))
+        
+        legitimacy_chart = MetricsVisualizer.create_legitimacy_evolution_chart(historical_data)
+        await ctx.send(file=discord.File(legitimacy_chart, 'legitimacy_evolution.png'))
+        
+        resources_chart = MetricsVisualizer.create_resources_evolution_chart(historical_data)
+        await ctx.send(file=discord.File(resources_chart, 'resources_evolution.png'))
+        
+        min_tick, max_tick = engine.persistence.get_tick_range(engine.session_id)
+        await ctx.send(f"✅ Historical analysis complete! Ticks: {min_tick} → {max_tick}")
+        
+    except Exception as e:
+        logger.error(f"History chart error: {e}")
+        await ctx.send(f"⚠️ Error generating historical charts: {str(e)}")
 
 @bot.event
 async def on_command_error(ctx, error):

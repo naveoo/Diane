@@ -5,13 +5,9 @@ from typing import Optional, List
 from .serializer import to_json
 from deltas.types import WorldDelta
 from domains.world import World
-from rules.defaults import Defaults
+from core.defaults import Defaults
 
 class PersistenceManager:
-    """
-    Manages SQLite database for simulation history.
-    """
-    
     def __init__(self, db_path: str = "simulation.db"):
         self.db_path = db_path
         self.init_schema()
@@ -70,20 +66,17 @@ class PersistenceManager:
         delta_json = to_json(delta)
         
         with self.get_connection() as conn:
-            # 1. Create Tick
             conn.execute(
                 "INSERT INTO ticks (session_id, tick_number, timestamp) VALUES (?, ?, ?)",
                 (session_id, tick, timestamp)
             )
             
-            # 2. Save Delta if provided
             if delta:
                 conn.execute(
                     "INSERT INTO deltas (session_id, tick_number, delta_json) VALUES (?, ?, ?)",
                     (session_id, tick, delta_json)
                 )
             
-            # 3. Save Snapshot if provided
             if world_snapshot:
                 world_json = to_json(world_snapshot)
                 conn.execute(
@@ -113,3 +106,19 @@ class PersistenceManager:
                 (session_id, start_tick, end_tick)
             )
             return [row[0] for row in cursor.fetchall()]
+
+    def get_all_snapshots(self, session_id: str) -> List[tuple]:
+        with self.get_connection() as conn:
+            cursor = conn.execute(
+                "SELECT tick_number, world_json FROM snapshots WHERE session_id = ? ORDER BY tick_number",
+                (session_id,)
+            )
+            return cursor.fetchall()
+    
+    def get_tick_range(self, session_id: str) -> tuple:
+        with self.get_connection() as conn:
+            res = conn.execute(
+                "SELECT MIN(tick_number), MAX(tick_number) FROM ticks WHERE session_id = ?",
+                (session_id,)
+            ).fetchone()
+            return (res[0] or 0, res[1] or 0)

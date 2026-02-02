@@ -1,3 +1,21 @@
-discord.py
-python-dotenv
-aiohttp
+# Diane - Geopolitical Faction Simulation Engine
+# Python Dependencies
+
+# Core Dependencies
+discord.py>=2.3.0
+python-dotenv>=1.0.0
+aiohttp>=3.9.0
+
+# Data Visualization
+matplotlib>=3.8.0
+
+# Database (included in Python standard library)
+# sqlite3
+
+# Testing Dependencies
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# Optional: Development Dependencies
+# black>=23.0.0
+# mypy>=1.7.0

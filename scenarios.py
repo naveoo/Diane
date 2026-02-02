@@ -38,26 +38,21 @@ def create_demo_scenario() -> World:
     )
     f3.traits = {"Technocrat", "Militarist"}
     
-    # Strategic Regions
-    # HEGEMONY REGIONS
     r1 = Region(id="r_capital", name="Hegemon City", population=8000, owner="f_hegemony", 
                 environment=EnvironmentType.URBAN, socio_economic=RegionSocioEconomic(infrastructure=85.0, cohesion=90.0))
     r2 = Region(id="r_foundries", name="Iron Foundries", population=1500, owner="f_hegemony", 
                 environment=EnvironmentType.INDUSTRIAL, socio_economic=RegionSocioEconomic(infrastructure=60.0, cohesion=40.0))
     
-    # REPUBLIC REGIONS
     r3 = Region(id="r_liberty", name="Liberty Port", population=3000, owner="f_republic", 
                 environment=EnvironmentType.COASTAL, socio_economic=RegionSocioEconomic(infrastructure=70.0, cohesion=95.0))
     r4 = Region(id="r_breadbasket", name="Verdant Valleys", population=2000, owner="f_republic", 
                 environment=EnvironmentType.RURAL, socio_economic=RegionSocioEconomic(infrastructure=40.0, cohesion=100.0))
     
-    # SYNDICATE REGIONS
     r5 = Region(id="r_citadel", name="Syndicate Citadel", population=1200, owner="f_syndicate", 
                 environment=EnvironmentType.INDUSTRIAL, socio_economic=RegionSocioEconomic(infrastructure=90.0, cohesion=70.0))
     r6 = Region(id="r_outreach", name="Sky Station", population=600, owner="f_syndicate", 
                 environment=EnvironmentType.URBAN, socio_economic=RegionSocioEconomic(infrastructure=75.0, cohesion=80.0))
     
-    # NEUTRAL / BUFFER ZONES (The "Wild West")
     r7 = Region(id="r_deadzone", name="The Badlands", population=150, owner=None, 
                 environment=EnvironmentType.WILDERNESS, socio_economic=RegionSocioEconomic(infrastructure=10.0, cohesion=30.0))
     r8 = Region(id="r_coast_pass", name="Indigo Coast", population=900, owner=None, 
@@ -73,26 +68,21 @@ def create_demo_scenario() -> World:
     )
 
 def world_from_dict(data: dict) -> World:
-    """Reconstructs a World object from a dictionary."""
     world = World(factions={}, regions={})
     
-    # Reconstruct Factions
     factions_data = data.get("factions", [])
-    # Can be a list of dicts or a dict of id -> dict
     if isinstance(factions_data, dict):
         fitems = factions_data.items()
     else:
         fitems = [(f["id"], f) for f in factions_data]
 
     for fid, f_data in fitems:
-        # Resource Reconstruct
         res_data = f_data.get("resources", 50.0)
         if isinstance(res_data, (int, float)):
             resources = Resources(credits=float(res_data))
         else:
             resources = Resources.from_dict(res_data)
 
-        # Power Reconstruct
         pow_data = f_data.get("power", 50.0)
         from domains.power import Power
         if isinstance(pow_data, (int, float)):
@@ -115,7 +105,6 @@ def world_from_dict(data: dict) -> World:
         faction.is_active = f_data.get("is_active", True)
         world.factions[fid] = faction
         
-    # Reconstruct Regions
     regions_data = data.get("regions", [])
     if isinstance(regions_data, dict):
         ritems = regions_data.items()
@@ -124,10 +113,8 @@ def world_from_dict(data: dict) -> World:
 
     for rid, r_data in ritems:
         from domains.region_meta import EnvironmentType, RegionSocioEconomic
-        # Socio-Economic Reconstruct
         se_data = r_data.get("socio_economic")
         if not se_data:
-            # Handle legacy stability
             cohesion = float(r_data.get("stability", 100.0))
             socio_economic = RegionSocioEconomic(cohesion=cohesion)
         else:
@@ -145,14 +132,12 @@ def world_from_dict(data: dict) -> World:
         )
         world.regions[rid] = region
         
-        # Cross-reference owner
         if region.owner and region.owner in world.factions:
             world.factions[region.owner].regions.add(rid)
             
     return world
 
 def world_to_dict(world: World) -> dict:
-    """Serializes a World object to a dictionary."""
     data = {"factions": [], "regions": []}
     
     for f in world.factions.values():
@@ -183,6 +168,5 @@ def world_to_dict(world: World) -> dict:
     return data
 
 def load_scenario_json(json_str: str) -> World:
-    """Loads a world from a JSON string."""
     data = json.loads(json_str)
     return world_from_dict(data)
