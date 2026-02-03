@@ -1,0 +1,20 @@
+from discord_bot import engine, bot, user_drafts
+from scenarios import world_to_dict, world_from_dict
+from discord.ext import commands
+
+class captureDraftCog(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+        
+    @commands.command(name="capture_draft")
+    async def capture_draft(self, ctx):
+        if not engine.world:
+            await ctx.send("❌ Error: No active simulation to capture.")
+            return
+        
+        world_dict = world_to_dict(engine.world)
+        user_drafts[ctx.author.id] = world_from_dict(world_dict)
+        await ctx.send("📸 Active simulation state captured into your draft! You can now modify it and use `!start_custom`.")
+
+async def setup(bot):
+    await bot.add_cog(captureDraftCog(bot))
