@@ -6,6 +6,7 @@ from domains.world import World
 from domains.faction import Faction
 from deltas.builder import DeltaBuilder
 from deltas.applier import DeltaApplier
+from deltas.validator import DeltaValidator
 from persistence.manager import PersistenceManager
 
 # Systems

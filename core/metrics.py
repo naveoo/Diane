@@ -25,35 +25,46 @@ class GeopoliticalMetrics:
 
         total_power = sum(f.power.total for f in factions)
         power_shares = [f.power.total / (total_power + 0.1) for f in factions]
-        
+
         hhi = sum(s**2 for s in power_shares)
-        
+
         sorted_powers = sorted([f.power.total for f in factions])
         n = len(sorted_powers)
         gini = 0
         if n > 1:
             diff_sum = sum(abs(x - y) for x in sorted_powers for y in sorted_powers)
             gini = diff_sum / (2 * n * sum(sorted_powers))
-            
+
         avg_legitimacy = sum(f.legitimacy for f in factions) / n
         tension = (100 - avg_legitimacy) * (hhi * 10) # High hegemony + low legitimacy = high tension
-        
+
         regions = list(world.regions.values())
         avg_infra = sum(r.socio_economic.infrastructure for r in regions) / (len(regions) + 0.1)
         avg_knowledge = sum(f.knowledge for f in factions) / n
-        
+
         alliances_count = sum(len(f.alliances) for f in factions) / 2
-        
+
         total_food = sum(f.resources.food for f in factions)
         total_energy = sum(f.resources.energy for f in factions)
         total_pop = sum(sum(world.get_region(rid).population for rid in f.regions if world.get_region(rid)) for f in factions)
-        
+
         food_security = (total_food / (total_pop * 0.01 + 1)) * 10  # Ratio to requirement
         energy_security = (total_energy / (total_power * 0.1 + 1)) * 10
-        
+
         isolated_count = sum(1 for f in factions if len(f.alliances) == 0)
         fragmentation = isolated_count / n
-        
+
+        # Calcul de avg_cohesion
+        total_cohesion = 0
+        region_count = 0
+        for f in factions:
+            for rid in f.regions:
+                r = world.get_region(rid)
+                if r:
+                    total_cohesion += r.socio_economic.cohesion
+                    region_count += 1
+        avg_cohesion = total_cohesion / (region_count + 0.1) if region_count > 0 else 0
+
         return {
             "total_power": round(total_power, 1),
             "hegemony_hhi": round(hhi, 3),
@@ -65,16 +76,17 @@ class GeopoliticalMetrics:
             "polarization_score": round(alliances_count / (n + 0.1), 2),
             "food_security_index": round(food_security, 2),
             "energy_security_index": round(energy_security, 2),
-            "diplomatic_fragmentation": round(fragmentation, 2)
+            "diplomatic_fragmentation": round(fragmentation, 2),
+            "avg_cohesion": round(avg_cohesion, 1)
         }
-
+    
     @staticmethod
     def calculate_faction_metrics(world: World, faction: Faction) -> Dict[str, Any]:
         res = faction.resources
         p = faction.power
-        
+
         cpi = p.total * (1 + (faction.knowledge / 100))
-        
+
         total_pop = 0
         region_pops = []
         for rid in faction.regions:
@@ -82,44 +94,44 @@ class GeopoliticalMetrics:
             if r:
                 total_pop += r.population
                 region_pops.append(r.population)
-        
+
         strategic_depth = 0
         if len(region_pops) > 1:
             strategic_depth = sum(-(p/total_pop) * math.log(p/total_pop) for p in region_pops)
 
         income_potential = (res.credits + res.materials + res.food + res.energy)
         econ_intensity = income_potential / (total_pop + 1)
-        
-        support_gap = faction.legitimacy - avg_cohesion
+
         avg_cohesion = 0
         for rid in faction.regions:
             r = world.get_region(rid)
-            if r: avg_cohesion += r.socio_economic.cohesion
+            if r:
+                avg_cohesion += r.socio_economic.cohesion
         avg_cohesion /= (len(faction.regions) + 0.1)
-        
+
         support_gap = faction.legitimacy - avg_cohesion
 
         other_factions = [f for f in world.factions.values() if f.is_active and f.id != faction.id]
         avg_other_power = sum(f.power.total for f in other_factions) / (len(other_factions) + 0.1)
         military_balance = p.total / (avg_other_power + 0.1)
-        
+
         food_req = total_pop * 0.01
         energy_req = p.total * 0.1
         food_security = (res.food / (food_req + 1)) * 100
         energy_security = (res.energy / (energy_req + 1)) * 100
-        
+
         alliance_strength = sum(world.factions[aid].power.total for aid in faction.alliances if aid in world.factions and world.factions[aid].is_active)
         diplomatic_influence = (len(faction.alliances) * 10) + (alliance_strength / 10)
-        
+
         threat_level = 0
         for other in other_factions:
             if faction.id not in other.alliances:
                 if other.power.total > p.total:
                     threat_level += (other.power.total - p.total) / 10
-        
+
         avg_knowledge = sum(f.knowledge for f in world.factions.values() if f.is_active) / len([f for f in world.factions.values() if f.is_active])
         tech_advantage = faction.knowledge - avg_knowledge
-        
+
         return {
             "composite_power_index": round(cpi, 2),
             "strategic_depth_index": round(strategic_depth, 2),
@@ -132,7 +144,7 @@ class GeopoliticalMetrics:
             "energy_security_pct": round(energy_security, 1),
             "diplomatic_influence": round(diplomatic_influence, 1),
             "threat_level": round(threat_level, 1),
-            "tech_advantage": round(tech_advantage, 1)
+            "tech_advantage": round(tech_advantage, 1),
         }
 
     @staticmethod
@@ -224,5 +236,5 @@ class GeopoliticalMetrics:
                 (f1.resources.credits + f1.resources.materials) / 
                 (f2.resources.credits + f2.resources.materials + 0.1), 2
             ),
-            "are_allied": f1.id in f2.alliances
+            "are_allied": f1.id in f2.alliances,
         }

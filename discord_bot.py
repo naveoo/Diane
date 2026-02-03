@@ -11,7 +11,7 @@ from scenarios import create_demo_scenario, load_scenario_json, world_from_dict,
 from domains.faction import Faction
 from domains.region import Region
 from domains.world import World
-from rules.visualizer import MetricsVisualizer
+from core.visualizer import MetricsVisualizer
 
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
@@ -119,7 +119,7 @@ async def world_metrics(ctx):
     if not engine.world:
         await ctx.send("❌ Error: No session active.")
         return
-        
+
     metrics = engine.get_metrics()
     w = metrics["world"]
     
