@@ -14,7 +14,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger("DiscordBot")
+logger = logging.getLogger("DianeBot")
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -29,9 +29,9 @@ async def load_commands():
         if filename.endswith(".py") and not filename.startswith("_"):
             try:
                 await bot.load_extension(f"commands.{filename[:-3]}")
-                logger.info(f"Commande chargée : {filename}")
+                logger.info(f"Command loaded : {filename}")
             except Exception as e:
-                logger.error(f"Erreur lors du chargement de {filename} : {e}")
+                logger.error(f"Error : {e}")
 
 @bot.event
 async def on_ready():
@@ -43,12 +43,12 @@ async def on_ready():
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
         return
-    logger.error(f"Erreur de commande : {error}")
-    await ctx.send(f"⚠️ Erreur : {str(error)}")
+    logger.error(f"Error : {error}")
+    await ctx.send(f"Error : {str(error)}")
 
 if __name__ == "__main__":
     if not TOKEN:
-        logger.error("❌ ERREUR : BOT_TOKEN non trouvé dans le fichier .env")
+        logger.error("ERROR : BOT_TOKEN not found in .env")
     else:
         asyncio.run(load_commands())
         bot.run(TOKEN)
