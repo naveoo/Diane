@@ -1,5 +1,7 @@
 from bot import bot, engine
 from core.visualizer import MetricsVisualizer
+import json
+import discord
 from discord.ext import commands
 from utils.embeds import Embeds
 
@@ -56,7 +58,6 @@ class historyCog(commands.Cog):
             await ctx.send(embed=Embeds.create_success_embed("Historical analysis complete", f"Ticks: {min_tick} → {max_tick}"))
         
         except Exception as e:
-            logger.error(f"History chart error: {e}")
             await ctx.send(embed=Embeds.create_error_embed(f"Error generating historical charts: {str(e)}"))
 
 async def setup(bot):
