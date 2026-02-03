@@ -36,7 +36,7 @@ async def load_commands():
 @bot.event
 async def on_ready():
     logger.info(f"Bot connected as {bot.user}")
-    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="!help | [GitHub](https://github.com/naveoo/Diane)"))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="!help | Contribute in https://github.com/naveoo/Diane"))
 
 
 @bot.event
