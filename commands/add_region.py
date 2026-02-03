@@ -1,4 +1,4 @@
-from discord_bot import bot, user_drafts
+from bot import bot, user_drafts
 from discord.ext import commands
 from domains.region import Region
 from domains.region_meta import EnvironmentType, RegionSocioEconomic

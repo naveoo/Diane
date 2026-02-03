@@ -1,4 +1,4 @@
-from discord_bot import engine, bot
+from bot import engine, bot
 from discord import Embed, Color
 from core.metrics import GeopoliticalMetrics
 from discord.ext import commands

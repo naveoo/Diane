@@ -1,4 +1,4 @@
-from discord_bot import engine, bot
+from bot import engine, bot
 from core.visualizer import MetricsVisualizer
 from discord import File  
 from discord.ext import commands

@@ -1,4 +1,4 @@
-from discord_bot import engine, bot, user_drafts
+from bot import engine, bot, user_drafts
 from scenarios import world_to_dict, world_from_dict
 from discord.ext import commands
 from utils.embeds import Embeds

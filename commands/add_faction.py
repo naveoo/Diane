@@ -1,4 +1,4 @@
-from discord_bot import bot, user_drafts
+from bot import bot, user_drafts
 from discord.ext import commands
 from domains.faction import Faction
 from domains.power import Power

@@ -1,4 +1,4 @@
-from discord_bot import bot, engine
+from bot import bot, engine
 from core.visualizer import MetricsVisualizer
 from discord.ext import commands
 from utils.embeds import Embeds

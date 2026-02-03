@@ -1,4 +1,4 @@
-from discord_bot import engine, bot
+from bot import engine, bot
 from discord.ext import commands
 from utils.embeds import Embeds
 

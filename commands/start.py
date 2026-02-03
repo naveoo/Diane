@@ -1,6 +1,6 @@
-from discord_bot import engine
+from bot import engine
 from scenarios import create_demo_scenario
-from discord_bot import bot
+from bot import bot
 from discord.ext import commands
 from utils.embeds import Embeds
 

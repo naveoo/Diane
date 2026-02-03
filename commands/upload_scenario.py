@@ -1,4 +1,4 @@
-from discord_bot import bot, user_drafts
+from bot import bot, user_drafts
 import aiohttp
 from scenarios import load_scenario_json
 from discord.ext import commands

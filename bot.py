@@ -35,7 +35,9 @@ async def load_commands():
 
 @bot.event
 async def on_ready():
-    logger.info(f"Bot connecté en tant que {bot.user}")
+    logger.info(f"Bot connected as {bot.user}")
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="!help"))
+
 
 @bot.event
 async def on_command_error(ctx, error):

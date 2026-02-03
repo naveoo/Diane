@@ -1,4 +1,4 @@
-from discord_bot import bot, engine, user_drafts
+from bot import bot, engine, user_drafts
 from discord.ext import commands
 from utils.embeds import Embeds
 
