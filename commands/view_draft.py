@@ -1,5 +1,6 @@
 from discord_bot import bot, discord, user_drafts
 from discord.ext import commands
+from utils.embeds import Embeds
 
 class viewDraftCog(commands.Cog):
     def __init__(self, bot):
@@ -8,11 +9,11 @@ class viewDraftCog(commands.Cog):
     @commands.command(name="view_draft")
     async def view_draft(self, ctx):
         if ctx.author.id not in user_drafts:
-            await ctx.send("❌ Error: No draft found.")
+            await ctx.send(embed=Embeds.create_error_embed("No draft found."))
             return
     
         world = user_drafts[ctx.author.id]
-        embed = discord.Embed(title="📝 Draft Scenario", color=discord.Color.orange())
+        embed = Embeds.create_info_embed(title="Draft Scenario")
     
         factions_str = ", ".join(f"{f.name} ({f.id})" for f in world.factions.values()) or "None"
         regions_str = ", ".join(f"{r.name} ({r.id})" for r in world.regions.values()) or "None"

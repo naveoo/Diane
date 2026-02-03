@@ -2,6 +2,7 @@ from discord_bot import engine
 from scenarios import create_demo_scenario
 from discord_bot import bot
 from discord.ext import commands
+from utils.embeds import Embeds
 
 class startCog(commands.Cog):
     def __init__(self, bot):
@@ -12,7 +13,7 @@ class startCog(commands.Cog):
         engine.create_session(name)
         world = create_demo_scenario()
         engine.initialize_world(world)
-        await ctx.send(f"🚀 Session **{name}** started! ID: `{engine.session_id}`")
+        await ctx.send(embed=Embeds.create_success_embed("Session started", f"Session **{name}** started! ID: `{engine.session_id}`"))
 
 async def setup(bot):
     await bot.add_cog(startCog(bot))

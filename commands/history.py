@@ -1,6 +1,7 @@
 from discord_bot import bot, engine
 from core.visualizer import MetricsVisualizer
 from discord.ext import commands
+from utils.embeds import Embeds
 
 class historyCog(commands.Cog):
     def __init__(self, bot):
@@ -9,16 +10,16 @@ class historyCog(commands.Cog):
     @commands.command(name="history")
     async def show_history(self, ctx):
         if not engine.session_id:
-            await ctx.send("❌ Error: No session active.")
+            await ctx.send(embed=Embeds.create_error_embed("No active simulation to capture."))
             return
     
-        await ctx.send("📊 Generating historical charts... This may take a moment.")
+        await ctx.send(embed=Embeds.create_info_embed("Generating historical charts... This may take a moment."))
     
         try:
             snapshots = engine.persistence.get_all_snapshots(engine.session_id)
         
             if len(snapshots) < 2:
-                await ctx.send("❌ Not enough historical data. Run more ticks first.")
+                await ctx.send(embed=Embeds.create_error_embed("Not enough historical data. Run more ticks first."))
                 return
         
             historical_data = []
@@ -52,11 +53,11 @@ class historyCog(commands.Cog):
             await ctx.send(file=discord.File(resources_chart, 'resources_evolution.png'))
         
             min_tick, max_tick = engine.persistence.get_tick_range(engine.session_id)
-            await ctx.send(f"✅ Historical analysis complete! Ticks: {min_tick} → {max_tick}")
+            await ctx.send(embed=Embeds.create_success_embed("Historical analysis complete", f"Ticks: {min_tick} → {max_tick}"))
         
         except Exception as e:
             logger.error(f"History chart error: {e}")
-            await ctx.send(f"⚠️ Error generating historical charts: {str(e)}")
+            await ctx.send(embed=Embeds.create_error_embed(f"Error generating historical charts: {str(e)}"))
 
 async def setup(bot):
     await bot.add_cog(historyCog(bot))  
