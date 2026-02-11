@@ -68,6 +68,10 @@ class FactionDeltaBuilder:
         self.delta.resources = resources
         return self
 
+    def set_detailed_resources(self, resources: 'Ressources') -> 'FactionDeltaBuilder':
+        self.delta.detailed_resources = resources
+        return self
+
     def set_knowledge(self, value: float) -> 'FactionDeltaBuilder':
         self.delta.knowledge = value
         return self

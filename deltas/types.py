@@ -9,6 +9,7 @@ class FactionDelta:
     power: Optional[Power] = None
     legitimacy: Optional[float] = None
     resources: Optional[Resources] = None
+    detailed_resources: Optional['Ressources'] = None
     knowledge: Optional[float] = None
     
     add_regions: Set[str] = field(default_factory=set)
@@ -38,6 +39,7 @@ class FactionCreationData:
     resources: Resources
     regions: Set[str]
     alliances: Set[str]
+    detailed_resources: Optional['Ressources'] = None
     knowledge: float = 0.0
     traits: Set[str] = field(default_factory=set)
     color: str = "#808080"

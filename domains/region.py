@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from .region_meta import EnvironmentType, RegionSocioEconomic
+from .region_meta import EnvironmentType, RegionSocioEconomic, WeatherState
 
 @dataclass(slots=True)
 class Region:
@@ -10,6 +10,7 @@ class Region:
     owner: str
     environment: EnvironmentType = EnvironmentType.RURAL
     socio_economic: RegionSocioEconomic = field(default_factory=RegionSocioEconomic)
+    weather: WeatherState = field(default_factory=WeatherState)
 
     @property
     def stability(self) -> float:

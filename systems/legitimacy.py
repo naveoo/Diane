@@ -25,6 +25,8 @@ class LegitimacySystem(BaseSystem):
             
             step1 = current_legitimacy * (1 - cfg.base_legitimacy_decay)
             
+            from core.defaults import Rules
+
             stability_bonus = 0.0
             t_cfg = self.config.traits
             if faction.regions:
@@ -42,7 +44,7 @@ class LegitimacySystem(BaseSystem):
                         impact *= t_cfg.autocrat_stability_impact_mod
                     stability_bonus = avg_cohesion * impact
             
-            gini_penalty = gini * cfg.inequality_penalty * 100.0
+            gini_penalty = gini * cfg.inequality_penalty * Rules.Legitimacy.GINI_PENALTY_SCALE
             if "Populist" in faction.traits:
                 gini_penalty *= t_cfg.populist_inequality_penalty_mod
             

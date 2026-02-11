@@ -9,7 +9,6 @@ from deltas.applier import DeltaApplier
 from deltas.validator import DeltaValidator
 from persistence.manager import PersistenceManager
 
-# Systems
 from systems.base import BaseSystem
 from systems.power import PowerSystem
 from systems.economy import EconomySystem
@@ -22,6 +21,10 @@ from systems.investment import InvestmentSystem
 from core.metrics import GeopoliticalMetrics
 from systems.research import ResearchSystem
 from systems.trade import TradeSystem
+from systems.weather import WeatherSystem
+from systems.demographics import DemographicsSystem
+from systems.market import MarketSystem
+from systems.events import EventSystem
 
 logger = logging.getLogger("SimulationEngine")
 
@@ -35,9 +38,12 @@ class SimulationEngine:
         self.current_tick: int = 0
         
         self.systems: List[BaseSystem] = [
+            WeatherSystem(self.config),
             RegionSystem(self.config),
             PowerSystem(self.config),
             EconomySystem(self.config),
+            MarketSystem(self.config),
+            DemographicsSystem(self.config),
             LegitimacySystem(self.config),
             AllianceSystem(self.config),
             WarSystem(self.config),
@@ -45,6 +51,7 @@ class SimulationEngine:
             TradeSystem(self.config),
             InvestmentSystem(self.config),
             ConflictSystem(self.config),
+            EventSystem(self.config),
         ]
         
     def create_session(self, session_name: str):

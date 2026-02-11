@@ -18,59 +18,59 @@ class HelpCog(commands.Cog):
         
         embed_simulation.add_field(
             name="▸ Start Simulation",
-            value="```>!start```\nInitialize a new simulation with default parameters.",
+            value="```!start```\nInitialize a new simulation with default parameters.",
             inline=False
         )
         
         embed_simulation.add_field(
             name="▸ Advance Time",
-            value="```>!step <years>```\nProgress the simulation by a specified number of years.\n*Example: `>!step 5` advances 5 years*",
+            value="```!step <years>```\nProgress the simulation by a specified number of years.\n*Example: `!step 5` advances 5 years*",
             inline=False
         )
         
         embed_simulation.add_field(
             name="▸ Current Status",
-            value="```>!status```\nView the current state of all factions and regions.",
+            value="```!status```\nView the current state of all factions and regions.",
             inline=False
         )
         
         embed_simulation.add_field(
             name="▸ Metrics Dashboard",
-            value="```>!metrics```\nDisplay comprehensive metrics and statistics for the simulation.",
+            value="```!metrics```\nDisplay comprehensive metrics and statistics for the simulation.",
             inline=False
         )
         
         embed_simulation.add_field(
             name="▸ Historical Timeline",
-            value="```>!history```\nReview the complete event history of your simulation.",
+            value="```!history```\nReview the complete event history of your simulation.",
             inline=False
         )
         
         embed_simulation.add_field(
             name="▸ Compare Factions",
-            value="```>!compare <faction1_id> <faction2_id>```\nGenerate a detailed comparison between two factions.\n*Example: `>!compare 1 3`*",
+            value="```!compare <faction1_id> <faction2_id>```\nGenerate a detailed comparison between two factions.\n*Example: `!compare 1 3`*",
             inline=False
         )
         
         embed_simulation.add_field(
             name="▸ Rankings",
-            value="```>!rankings```\nView power rankings and standings of all factions.",
+            value="```!rankings```\nView power rankings and standings of all factions.",
             inline=False
         )
         
         embed_simulation.add_field(
             name="▸ Save Draft",
-            value="```>!capture_draft```\nCreate a snapshot of the current simulation state for later use.",
+            value="```!capture_draft```\nCreate a snapshot of the current simulation state for later use.",
             inline=False
         )
         
         embed_simulation.add_field(
             name="▸ Load Session",
-            value="```>!load <session_id>```\nRestore a previously saved simulation session.\n*Example: `>!load my_session_001`*",
+            value="```!load <session_id>```\nRestore a previously saved simulation session.\n*Example: `!load my_session_001`*",
             inline=False
         )
         
-        embed_simulation.set_footer(text="Tip: Use >!help to view this menu anytime")
+        embed_simulation.set_footer(text="Tip: Use !help to view this menu anytime")
         
         embed_creation = Embeds.create_info_embed(
             "Scenario Creation Tools",
@@ -79,49 +79,49 @@ class HelpCog(commands.Cog):
         
         embed_creation.add_field(
             name="▸ New Scenario",
-            value="```>!new_scenario```\nInitiate the creation of a custom scenario from scratch.",
+            value="```!new_scenario```\nInitiate the creation of a custom scenario from scratch.",
             inline=False
         )
         
         embed_creation.add_field(
             name="▸ Available Traits",
-            value="```>!traits```\nList all faction traits and their effects on gameplay.",
+            value="```!traits```\nList all faction traits and their effects on gameplay.",
             inline=False
         )
         
         embed_creation.add_field(
             name="▸ Add Faction",
-            value="```>!add_faction```\nCreate a new faction with custom attributes and ideology.",
+            value="```!add_faction```\nCreate a new faction with custom attributes and ideology.",
             inline=False
         )
         
         embed_creation.add_field(
             name="▸ Add Region",
-            value="```>!add_region```\nDefine a new geographic region with specific characteristics.",
+            value="```!add_region```\nDefine a new geographic region with specific characteristics.",
             inline=False
         )
         
         embed_creation.add_field(
             name="▸ Assign Territory",
-            value="```>!assign_region <region_id> <faction_id>```\nAllocate a region to a specific faction's control.\n*Example: `>!assign_region region_1 faction_2`*",
+            value="```!assign_region <region_id> <faction_id>```\nAllocate a region to a specific faction's control.\n*Example: `!assign_region region_1 faction_2`*",
             inline=False
         )
         
         embed_creation.add_field(
             name="▸ Import Scenario",
-            value="```>!upload_scenario <file>```\nLoad a complete scenario from a JSON configuration file.",
+            value="```!upload_scenario <file>```\nLoad a complete scenario from a JSON configuration file.",
             inline=False
         )
         
         embed_creation.add_field(
             name="▸ Preview Draft",
-            value="```>!view_draft```\nReview your scenario configuration before launching.",
+            value="```!view_draft```\nReview your scenario configuration before launching.",
             inline=False
         )
         
         embed_creation.add_field(
             name="▸ Launch Custom Simulation",
-            value="```>!start_custom```\nBegin simulation with your custom scenario configuration.",
+            value="```!start_custom```\nBegin simulation with your custom scenario configuration.",
             inline=False
         )
         
@@ -330,10 +330,10 @@ class HelpCog(commands.Cog):
         embed_reference.add_field(
             name="Getting Started",
             value=(
-                "1. Use `>!start` for a quick default simulation\n"
-                "2. Use `>!new_scenario` for custom configurations\n"
-                "3. Run `>!step 1` to begin the simulation timeline\n"
-                "4. Check `>!status` regularly to monitor developments"
+                "1. Use `!start` for a quick default simulation\n"
+                "2. Use `!new_scenario` for custom configurations\n"
+                "3. Run `!step 1` to begin the simulation timeline\n"
+                "4. Check `!status` regularly to monitor developments"
             ),
             inline=False
         )
@@ -341,10 +341,10 @@ class HelpCog(commands.Cog):
         embed_reference.add_field(
             name="Monitoring Progress",
             value=(
-                "• `>!metrics` provides high-level overview\n"
-                "• `>!rankings` shows competitive standings\n"
-                "• `>!history` reveals cause-and-effect chains\n"
-                "• `>!compare` enables direct faction analysis"
+                "• `!metrics` provides high-level overview\n"
+                "• `!rankings` shows competitive standings\n"
+                "• `!history` reveals cause-and-effect chains\n"
+                "• `!compare` enables direct faction analysis"
             ),
             inline=False
         )
@@ -352,7 +352,7 @@ class HelpCog(commands.Cog):
         embed_reference.add_field(
             name="Important Notes",
             value=(
-                "• Save drafts regularly with `>!capture_draft`\n"
+                "• Save drafts regularly with `!capture_draft`\n"
                 "• Large time steps (>1000 years) may cause instability\n"
                 "• Custom scenarios require all regions to be assigned\n"
                 "• Metric interpretations depend on scenario context"

@@ -9,87 +9,146 @@ class EconomySystem(BaseSystem):
         cfg = self.config.economy
         t_cfg = self.config.traits
         l_cfg = self.config.legitimacy
-        
+        from core.defaults import Rules
+        from domains.ressources import Ressources, Energetic, Human, Material, Production, Intangible, Vital
+        from domains.region_meta import EnvironmentType
+
         for faction_id, faction in world.factions.items():
             if not faction.is_active:
                 continue
-                
-            income = Resources()
-            inc_mod = 1.0
-            if "Industrialist" in faction.traits:
-                inc_mod = t_cfg.industrialist_income_mod
             
-            income.credits = cfg.base_credits_income * inc_mod
-            income.materials = cfg.base_materials_income * inc_mod
-            income.food = 1.0
-            income.energy = 0.5
-            income.influence = cfg.base_influence_income
+            prod_energetic = Energetic()
+            prod_material = Material()
+            prod_vital = Vital()
+            prod_production = Production()
+            prod_intangible = Intangible()
             
             total_pop = 0
+            
             for rid in faction.regions:
                 region = world.get_region(rid)
                 if not region: continue
                 
                 total_pop += region.population
-                pop_factor = region.population / 1000.0
-                dev_mult = 1.0 + (region.socio_economic.infrastructure / 100.0)
-                efficiency = region.socio_economic.cohesion / 100.0
+                pop_ratio = region.population / Rules.Economy.POPULATION_DIVISOR
+                dev_mult = 1.0 + (region.socio_economic.infrastructure / Rules.Economy.INFRASTRUCTURE_DIVISOR)
                 
-                from domains.region_meta import EnvironmentType
-                if region.environment == EnvironmentType.URBAN:
-                    income.credits += (cfg.region_credits_factor * pop_factor * 2.0) * dev_mult * efficiency
-                    income.energy -= cfg.urban_energy_drain
+                weather_mult_food = 1.0
+                weather_mult_energy = 1.0
+                weather_mult_water = 1.0
+                
+                from domains.region_meta import WeatherType
+                if region.weather.type == WeatherType.DROUGHT:
+                    weather_mult_food *= Rules.Weather.DROUGHT_FOOD_MULT
+                    weather_mult_water *= Rules.Weather.DROUGHT_WATER_MULT
+                elif region.weather.type == WeatherType.RAIN:
+                    weather_mult_food *= Rules.Weather.RAIN_FOOD_MULT
+                    weather_mult_water *= Rules.Weather.RAIN_WATER_MULT
+                elif region.weather.type == WeatherType.STORM:
+                    weather_mult_food *= Rules.Weather.STORM_FOOD_MULT
+                    weather_mult_energy *= Rules.Weather.STORM_ENERGY_MULT
+                elif region.weather.type == WeatherType.SNOW:
+                    weather_mult_food *= Rules.Weather.SNOW_FOOD_MULT
+                elif region.weather.type == WeatherType.HEATWAVE:
+                    weather_mult_water *= Rules.Weather.HEATWAVE_WATER_MULT
+                elif region.weather.type == WeatherType.CLOUDY:
+                    weather_mult_energy *= Rules.Weather.CLOUDY_SOLAR_MULT
+                
+                weather_mult_food = 1.0 + (weather_mult_food - 1.0) * region.weather.intensity
+                weather_mult_energy = 1.0 + (weather_mult_energy - 1.0) * region.weather.intensity
+                weather_mult_water = 1.0 + (weather_mult_water - 1.0) * region.weather.intensity
+                
+                if region.environment == EnvironmentType.INDUSTRIAL:
+                    prod_energetic = prod_energetic + Energetic(fossils=Rules.Economy.Detailed.FOSSIL_YIELD_INDUSTRIAL * dev_mult * weather_mult_energy)
+                    prod_material = prod_material + Material(metals_common=Rules.Economy.Detailed.METALS_YIELD_INDUSTRIAL * dev_mult)
+                elif region.environment == EnvironmentType.URBAN:
+                    prod_energetic = prod_energetic + Energetic(fossils=Rules.Economy.Detailed.FOSSIL_YIELD_URBAN * dev_mult * weather_mult_energy)
+                    prod_material = prod_material + Material(materials_construction=Rules.Economy.Detailed.CONSTRUCTION_YIELD_URBAN * dev_mult)
+                    prod_intangible = prod_intangible + Intangible(technology=Rules.Economy.Detailed.TECH_GROWTH_URBAN * dev_mult)
                 elif region.environment == EnvironmentType.COASTAL:
-                    income.credits += (cfg.region_credits_factor * pop_factor * 1.25) * dev_mult * efficiency
-                    income.materials += (cfg.region_materials_factor * 0.5) * dev_mult
-                    income.food += (cfg.coastal_food_yield * pop_factor) * dev_mult
-                elif region.environment == EnvironmentType.INDUSTRIAL:
-                    income.materials += (cfg.industrial_materials_yield) * dev_mult * efficiency
-                    income.energy += (cfg.industrial_energy_yield * dev_mult) * efficiency
-                    income.credits += (cfg.region_credits_factor * 0.5) * dev_mult
+                    prod_energetic = prod_energetic + Energetic(
+                        renewables=Rules.Economy.Detailed.RENEWABLE_YIELD_COASTAL * dev_mult * weather_mult_energy,
+                        biomass=Rules.Economy.Detailed.BIOMASS_YIELD_COASTAL * pop_ratio
+                    )
+                    prod_vital = prod_vital + Vital(
+                        food=Rules.Economy.Detailed.FOOD_YIELD_COASTAL * pop_ratio * weather_mult_food, 
+                        water=Rules.Economy.Detailed.WATER_YIELD_COASTAL * weather_mult_water
+                    )
                 elif region.environment == EnvironmentType.RURAL:
-                    income.food += (cfg.rural_food_yield * pop_factor) * dev_mult * efficiency
-                    income.materials += (cfg.region_materials_factor * 0.5) * dev_mult
-                else:
-                    income.materials += (cfg.region_materials_factor * 0.3)
+                    prod_energetic = prod_energetic + Energetic(
+                        renewables=Rules.Economy.Detailed.RENEWABLE_YIELD_RURAL * weather_mult_energy,
+                        biomass=Rules.Economy.Detailed.BIOMASS_YIELD_RURAL * pop_ratio
+                    )
+                    prod_vital = prod_vital + Vital(
+                        food=Rules.Economy.Detailed.FOOD_YIELD_RURAL * pop_ratio * weather_mult_food, 
+                        water=Rules.Economy.Detailed.WATER_YIELD_RURAL * weather_mult_water
+                    )
             
-            food_req = total_pop * cfg.food_per_population
-            energy_req = (faction.power.total * cfg.energy_per_power)
+            active_pop = int(total_pop * Rules.Economy.Detailed.POP_ACTIVE_RATIO)
+            qualified_pop = int(total_pop * Rules.Economy.Detailed.POP_QUALIFIED_RATIO)
             
-            income.food -= food_req
-            income.energy -= energy_req
+            human_res = Human(
+                population=total_pop,
+                population_active=active_pop,
+                population_qualified=qualified_pop
+            )
             
-            upkeep_mod = 1.0
-            if "Militarist" in faction.traits:
-                upkeep_mod = t_cfg.militarist_upkeep_mod
-            upkeep_credits = (faction.power.total * cfg.upkeep_power_factor) * upkeep_mod
-            income.credits -= upkeep_credits
+            prev_res = faction.detailed_resources or Ressources()
             
-            new_res = (faction.resources + income)
+            food_consumption = total_pop * cfg.food_per_population
+            energy_consumption = (faction.power.total * cfg.energy_per_power) + (total_pop * 0.001)
             
-            if new_res.food < 0:
-                starvation_ratio = abs(new_res.food) / (food_req + 1)
-                leg_loss = starvation_ratio * l_cfg.starvation_legitimacy_loss * 5.0
-                builder.for_faction(faction_id).set_legitimacy(max(0.0, faction.legitimacy - leg_loss))
-                builder.add_event(f"🟣 Faction {faction.name} suffers from FOOD SHORTAGE! Legitimacy dropping.")
-                new_res.food = 0
+            new_energetic = prev_res.energetic + prod_energetic
+            new_material = prev_res.material + prod_material
+            new_vital = prev_res.vital + prod_vital
+            new_intangible = prev_res.intangible + prod_intangible
             
-            if new_res.energy < 0:
-                builder.add_event(f"🟣 Faction {faction.name} suffers from ENERGY CRISIS!")
-                new_res.energy = 0
-                
-            corruption_mod = 1.0
-            if "Technocrat" in faction.traits:
-                corruption_mod = t_cfg.technocrat_corruption_mod
-            tax_rate = cfg.corruption_factor * corruption_mod
+            final_food = max(0, new_vital.food - food_consumption)
+            final_energy_fossils = max(0, new_energetic.fossils - (energy_consumption * 0.5))
+            final_energy_renewables = max(0, new_energetic.renewables - (energy_consumption * 0.5))
             
-            new_res.credits *= (1.0 - tax_rate)
-            new_res.materials *= (1.0 - tax_rate)
-            new_res.food *= 0.98
-            new_res.energy *= 0.98
+            
+            base_capital_income = cfg.base_credits_income * (1.0 + (prev_res.production.infrastructure / 100.0))
+            new_capital = prev_res.production.capital + base_capital_income - ((faction.power.total * cfg.upkeep_power_factor))
+            
+            final_detailed = Ressources(
+                energetic=Energetic(
+                    fossils=final_energy_fossils,
+                    renewables=final_energy_renewables,
+                    nuclear=prev_res.energetic.nuclear,
+                    biomass=prev_res.energetic.biomass + prod_energetic.biomass 
+                ),
+                human=human_res,
+                material=new_material,
+                production=Production(
+                    machinery=prev_res.production.machinery,
+                    infrastructure=prev_res.production.infrastructure,
+                    logistics=prev_res.production.logistics,
+                    capital=new_capital
+                ),
+                intangible=new_intangible,
+                vital=Vital(food=final_food, water=new_vital.water)
+            )
+            
+            simple_resources = final_detailed.to_simple_resources()
+            
+            builder.for_faction(faction_id).set_detailed_resources(final_detailed)
+            builder.for_faction(faction_id).set_resources(simple_resources)
+            
+            if simple_resources.food <= 0:
+                 starvation_ratio = abs(simple_resources.food) / (food_consumption + 1)
+                 leg_loss = starvation_ratio * l_cfg.starvation_legitimacy_loss * Rules.Economy.STARVATION_LEGITIMACY_PENALTY_MULT
+                 builder.for_faction(faction_id).set_legitimacy(max(0.0, faction.legitimacy - leg_loss))
+                 if prev_res.vital.food > 0:
+                     builder.add_event(f"🟣 Faction {faction.name} suffers from FOOD SHORTAGE! Legitimacy dropping.")
+
+            if simple_resources.energy <= 0:
+                 if prev_res.energetic.fossils > 0 or prev_res.energetic.renewables > 0:
+                    builder.add_event(f"🟣 Faction {faction.name} suffers from ENERGY CRISIS!")
             
             f_cfg = self.config.faction
-            new_res = new_res.clamp(f_cfg.min_resources - 100, f_cfg.max_resources * 20)
-            
-            if new_res != faction.resources:
-                builder.for_faction(faction_id).set_resources(new_res)
+            simple_resources = simple_resources.clamp(
+                -2000.0,
+                f_cfg.max_resources * Rules.Economy.MAX_RESOURCE_MULT
+            )
+            builder.for_faction(faction_id).set_resources(simple_resources)

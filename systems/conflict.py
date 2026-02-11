@@ -16,24 +16,25 @@ class ConflictSystem(BaseSystem):
                 if random.random() < cfg.insurrection_chance:
                     import uuid
                     from deltas.types import FactionCreationData
+                    from core.defaults import Rules
                     
                     new_id = f"nascent_{str(uuid.uuid4())[:8]}"
                     new_name = f"Commonalty of {region.name}"
                     
-                    builder.for_region(region_id).set_owner(new_id).set_stability(cfg.revolt_stability_threshold + 20.0)
+                    builder.for_region(region_id).set_owner(new_id).set_stability(cfg.revolt_stability_threshold + Rules.Conflict.INSURRECTION_STABILITY_BONUS)
                     
                     from domains.power import Power
                     from domains.economy import Resources
                     
-                    trait_pool = ["Militarist", "Pacifist", "Industrialist", "Technocrat", "Populist", "Diplomat", "Imperialist", "Autocrat"]
+                    trait_pool = Rules.Traits.TRAIT_POOL
                     selected_traits = set(random.sample(trait_pool, random.randint(1, 2)))
                     
                     creation_data = FactionCreationData(
                         id=new_id,
                         name=new_name,
-                        power=Power(army=15.0),
-                        legitimacy=60.0,
-                        resources=Resources(credits=10.0),
+                        power=Power(army=Rules.Conflict.INSURRECTION_ARMY),
+                        legitimacy=Rules.Conflict.INSURRECTION_LEGITIMACY,
+                        resources=Resources(credits=Rules.Conflict.INSURRECTION_CREDITS),
                         regions={region_id},
                         alliances=set(),
                         traits=selected_traits,
@@ -57,7 +58,12 @@ class ConflictSystem(BaseSystem):
                     faction = world.get_faction(region.owner)
                     if faction:
                         from domains.power import Power
-                        loss = Power(army=cfg.revolt_power_loss * 0.6, navy=cfg.revolt_power_loss * 0.3, air=cfg.revolt_power_loss * 0.1)
+                        from core.defaults import Rules
+                        loss = Power(
+                            army=cfg.revolt_power_loss * Rules.Conflict.REVOLT_POWER_LOSS_ARMY_FACTOR, 
+                            navy=cfg.revolt_power_loss * Rules.Conflict.REVOLT_POWER_LOSS_NAVY_FACTOR, 
+                            air=cfg.revolt_power_loss * Rules.Conflict.REVOLT_POWER_LOSS_AIR_FACTOR
+                        )
                         new_power = faction.power - loss
                         fb.set_power(new_power)
         
@@ -71,7 +77,6 @@ class ConflictSystem(BaseSystem):
                 builder.for_faction(faction_id).delta.deactivate = True
                 builder.add_event(f"🔴 COLLAPSE: Faction {faction.name} ({faction_id}) has collapsed!")
                 
-                # Liberate all regions
                 for rid in faction.regions:
                     builder.for_region(rid).set_owner("")
                     
@@ -86,17 +91,19 @@ class ConflictSystem(BaseSystem):
                 if random.random() < leg_cfg.revolution_chance:
                     builder.add_event(f"🔴 REVOLUTION: Revolution erupted in {faction.name} ({faction_id})!")
                     
-                    new_power = faction.power * 0.8
+                    from core.defaults import Rules
+                    new_power = faction.power * Rules.Conflict.REVOLUTION_POWER_REMAINING
                     builder.for_faction(faction_id).set_power(new_power)
                     
                     for rid in faction.regions:
                         rb = builder.for_region(rid)
                         region = world.get_region(rid)
                         if region:
-                            new_stab = max(0.0, region.socio_economic.cohesion - 20.0)
+                            new_stab = max(0.0, region.socio_economic.cohesion - Rules.Conflict.REVOLUTION_STABILITY_PENALTY)
                             rb.set_stability(new_stab)
             
-            cw_risk = cfg.civil_war_chance + (1.0 - (faction.legitimacy / 100.0)) * 0.1
+            from core.defaults import Rules
+            cw_risk = cfg.civil_war_chance + (1.0 - (faction.legitimacy / 100.0)) * Rules.Conflict.CIVIL_WAR_RISK_LEGITIMACY_FACTOR
             
             if random.random() < cw_risk:
                 if len(faction.regions) >= 2:
@@ -113,25 +120,24 @@ class ConflictSystem(BaseSystem):
                     rebel_id = f"rebels_{str(uuid.uuid4())[:8]}"
                     rebel_name = f"Rebels of {faction.name}"
                     
-                    rebel_power = faction.power * 0.4
-                    parent_power = faction.power * 0.6
+                    rebel_power = faction.power * Rules.Conflict.CIVIL_WAR_REBEL_POWER_RATIO
+                    parent_power = faction.power * Rules.Conflict.CIVIL_WAR_PARENT_POWER_RATIO
                     
                     builder.for_faction(faction_id).set_power(parent_power)
                     for rid in rebel_regions:
                         builder.for_faction(faction_id).remove_region(rid)
                         builder.for_region(rid).set_owner(rebel_id)
                         
-                    rebel_res = faction.resources * 0.5
+                    rebel_res = faction.resources * Rules.Conflict.CIVIL_WAR_REBEL_RESOURCE_RATIO
                     
-                    # Random traits for rebels
-                    trait_pool = ["Militarist", "Pacifist", "Industrialist", "Technocrat", "Populist", "Diplomat", "Imperialist", "Autocrat"]
+                    trait_pool = Rules.Traits.TRAIT_POOL
                     selected_traits = set(random.sample(trait_pool, random.randint(1, 2)))
 
                     creation_data = FactionCreationData(
                         id=rebel_id,
                         name=rebel_name,
                         power=rebel_power,
-                        legitimacy=50.0,
+                        legitimacy=Rules.Conflict.CIVIL_WAR_REBEL_LEGITIMACY,
                         resources=rebel_res,
                         regions=set(rebel_regions),
                         alliances=set(),

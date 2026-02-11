@@ -122,3 +122,37 @@ class PersistenceManager:
                 (session_id,)
             ).fetchone()
             return (res[0] or 0, res[1] or 0)
+            
+    def get_sampled_snapshots(self, session_id: str, max_points: int = 100) -> List[tuple]:
+        with self.get_connection() as conn:
+            cursor = conn.execute(
+                "SELECT tick_number FROM snapshots WHERE session_id = ? ORDER BY tick_number",
+                (session_id,)
+            )
+            all_ticks = [row[0] for row in cursor.fetchall()]
+            
+            if not all_ticks:
+                return []
+            
+            total_ticks = len(all_ticks)
+            if total_ticks <= max_points:
+                selected_ticks = all_ticks
+            else:
+                step = total_ticks / max_points
+                selected_indices = [int(i * step) for i in range(max_points)]
+                
+                if selected_indices and (total_ticks - 1) not in selected_indices:
+                     selected_indices[-1] = total_ticks - 1
+                
+                selected_ticks = [all_ticks[i] for i in selected_indices if i < total_ticks]
+                selected_ticks = sorted(list(set(selected_ticks)))
+            
+            if not selected_ticks:
+                return []
+
+            placeholders = ','.join(['?'] * len(selected_ticks))
+            query = f"SELECT tick_number, world_json FROM snapshots WHERE session_id = ? AND tick_number IN ({placeholders}) ORDER BY tick_number"
+            args = [session_id] + selected_ticks
+            
+            cursor = conn.execute(query, args)
+            return cursor.fetchall()

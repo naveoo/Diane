@@ -31,10 +31,12 @@ class PowerSystem(BaseSystem):
             new_power.navy = faction.power.navy * (1 + growth.navy) * (1 - cfg.navy_decay)
             new_power.air = faction.power.air * (1 + growth.air) * (1 - cfg.air_decay)
             
+            from core.defaults import Rules
+            
             num_regions = len(faction.regions)
-            new_power.army += (num_regions * cfg.region_power_factor) * 0.6
-            new_power.navy += (num_regions * cfg.region_power_factor) * 0.3
-            new_power.air += (num_regions * cfg.region_power_factor) * 0.1
+            new_power.army += (num_regions * cfg.region_power_factor) * Rules.Power.REGION_ARMY_FACTOR
+            new_power.navy += (num_regions * cfg.region_power_factor) * Rules.Power.REGION_NAVY_FACTOR
+            new_power.air += (num_regions * cfg.region_power_factor) * Rules.Power.REGION_AIR_FACTOR
             
             from domains.region_meta import EnvironmentType
             for rid in faction.regions:

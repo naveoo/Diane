@@ -36,7 +36,7 @@ class GeopoliticalMetrics:
             gini = diff_sum / (2 * n * sum(sorted_powers))
 
         avg_legitimacy = sum(f.legitimacy for f in factions) / n
-        tension = (100 - avg_legitimacy) * (hhi * 10) # High hegemony + low legitimacy = high tension
+        tension = (100 - avg_legitimacy) * (hhi * 10)
 
         regions = list(world.regions.values())
         avg_infra = sum(r.socio_economic.infrastructure for r in regions) / (len(regions) + 0.1)
@@ -48,13 +48,12 @@ class GeopoliticalMetrics:
         total_energy = sum(f.resources.energy for f in factions)
         total_pop = sum(sum(world.get_region(rid).population for rid in f.regions if world.get_region(rid)) for f in factions)
 
-        food_security = (total_food / (total_pop * 0.01 + 1)) * 10  # Ratio to requirement
+        food_security = (total_food / (total_pop * 0.01 + 1)) * 10
         energy_security = (total_energy / (total_power * 0.1 + 1)) * 10
 
         isolated_count = sum(1 for f in factions if len(f.alliances) == 0)
         fragmentation = isolated_count / n
 
-        # Calcul de avg_cohesion
         total_cohesion = 0
         region_count = 0
         for f in factions:
@@ -65,6 +64,23 @@ class GeopoliticalMetrics:
                     region_count += 1
         avg_cohesion = total_cohesion / (region_count + 0.1) if region_count > 0 else 0
 
+        total_happiness = 0
+        happiness_count = 0
+        for r in regions:
+            total_happiness += r.socio_economic.happiness
+            happiness_count += 1
+        avg_happiness = total_happiness / (happiness_count + 0.1) if happiness_count > 0 else 0
+        
+        from domains.region_meta import WeatherType
+        weather_counts = {}
+        for r in regions:
+            weather_type = r.weather.type.value
+            weather_counts[weather_type] = weather_counts.get(weather_type, 0) + 1
+        
+        market_prices = {}
+        if hasattr(world, 'market') and world.market:
+            market_prices = dict(world.market)
+        
         return {
             "total_power": round(total_power, 1),
             "hegemony_hhi": round(hhi, 3),
@@ -77,7 +93,10 @@ class GeopoliticalMetrics:
             "food_security_index": round(food_security, 2),
             "energy_security_index": round(energy_security, 2),
             "diplomatic_fragmentation": round(fragmentation, 2),
-            "avg_cohesion": round(avg_cohesion, 1)
+            "avg_cohesion": round(avg_cohesion, 1),
+            "avg_happiness": round(avg_happiness, 1),
+            "weather_distribution": weather_counts,
+            "market_prices": {k: round(v, 2) for k, v in market_prices.items()}
         }
     
     @staticmethod
@@ -132,6 +151,57 @@ class GeopoliticalMetrics:
         avg_knowledge = sum(f.knowledge for f in world.factions.values() if f.is_active) / len([f for f in world.factions.values() if f.is_active])
         tech_advantage = faction.knowledge - avg_knowledge
 
+        avg_happiness = 0
+        happiness_regions = 0
+        for rid in faction.regions:
+            r = world.get_region(rid)
+            if r:
+                avg_happiness += r.socio_economic.happiness
+                happiness_regions += 1
+        avg_happiness /= (happiness_regions + 0.1)
+        
+        detailed_resources = {}
+        if hasattr(faction, 'detailed_resources'):
+            dr = faction.detailed_resources
+            detailed_resources = {
+                "energetic": {
+                    "fossil": round(dr.energetic.fossils, 1),
+                    "renewable": round(dr.energetic.renewables, 1),
+                    "nuclear": round(dr.energetic.nuclear, 1)
+                },
+                "vital": {
+                    "food": round(dr.vital.food, 1),
+                    "water": round(dr.vital.water, 1)
+                },
+                "material": {
+                    "metals": round(dr.material.metals_common, 1),
+                    "rare_metals": round(dr.material.metals_rare, 1),
+                    "chemicals": round(dr.material.products_chemicals, 1),
+                    "construction": round(dr.material.materials_construction, 1)
+                },
+                "human": {
+                    "active_pop": round(dr.human.population_active, 1),
+                    "qualified_pop": round(dr.human.population_qualified, 1)
+                },
+                "intangible": {
+                    "technology": round(dr.intangible.technology, 1),
+                    "know_how": round(dr.intangible.know_how, 1),
+                    "data": round(dr.intangible.data, 1),
+                    "trust": round(dr.intangible.trust, 1)
+                },
+                "production": {
+                    "capital": round(dr.production.capital, 1),
+                    "logistics": round(dr.production.logistics, 1)
+                }
+            }
+        
+        weather_distribution = {}
+        for rid in faction.regions:
+            r = world.get_region(rid)
+            if r:
+                weather_type = r.weather.type.value
+                weather_distribution[weather_type] = weather_distribution.get(weather_type, 0) + 1
+        
         return {
             "composite_power_index": round(cpi, 2),
             "strategic_depth_index": round(strategic_depth, 2),
@@ -145,6 +215,9 @@ class GeopoliticalMetrics:
             "diplomatic_influence": round(diplomatic_influence, 1),
             "threat_level": round(threat_level, 1),
             "tech_advantage": round(tech_advantage, 1),
+            "avg_happiness": round(avg_happiness, 1),
+            "detailed_resources": detailed_resources,
+            "weather_distribution": weather_distribution
         }
 
     @staticmethod

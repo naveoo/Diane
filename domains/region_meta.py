@@ -15,15 +15,32 @@ class EnvironmentType(Enum):
         except ValueError:
             return cls.RURAL
 
+class WeatherType(Enum):
+    SUNNY = "SUNNY"
+    CLOUDY = "CLOUDY"
+    RAIN = "RAIN"
+    STORM = "STORM"
+    DROUGHT = "DROUGHT"
+    SNOW = "SNOW"
+    HEATWAVE = "HEATWAVE"
+
+@dataclass(slots=True)
+class WeatherState:
+    type: WeatherType = WeatherType.SUNNY
+    intensity: float = 1.0
+    duration: int = 0
+
 @dataclass(slots=True)
 class RegionSocioEconomic:
     infrastructure: float = 20.0
     cohesion: float = 100.0
+    happiness: float = 50.0
     
     def to_dict(self) -> dict:
         return {
             "infrastructure": self.infrastructure,
-            "cohesion": self.cohesion
+            "cohesion": self.cohesion,
+            "happiness": self.happiness
         }
     
     @classmethod
@@ -32,5 +49,6 @@ class RegionSocioEconomic:
             return cls()
         return cls(
             infrastructure=data.get("infrastructure", 20.0),
-            cohesion=data.get("cohesion", 100.0)
+            cohesion=data.get("cohesion", 100.0),
+            happiness=data.get("happiness", 50.0)
         )

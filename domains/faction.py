@@ -1,6 +1,7 @@
-from typing import Set
+from typing import Set, Optional
 from dataclasses import dataclass, field
 from .economy import Resources
+from .ressources import Ressources
 from .power import Power
 
 @dataclass(slots=True)
@@ -11,6 +12,7 @@ class Faction:
     power: Power = field(default_factory=Power)
     legitimacy: float = 50.0
     resources: Resources = field(default_factory=Resources)
+    detailed_resources: Optional[Ressources] = None
     knowledge: float = 0.0
     regions: Set[str] = field(default_factory=set)
     alliances: Set[str] = field(default_factory=set)
@@ -38,6 +40,8 @@ class Faction:
             self.legitimacy = delta.legitimacy
         if delta.resources is not None:
             self.resources = delta.resources
+        if delta.detailed_resources is not None:
+            self.detailed_resources = delta.detailed_resources
         if delta.knowledge is not None:
             self.knowledge = delta.knowledge
             

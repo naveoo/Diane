@@ -1,3 +1,4 @@
+from discord.ext.commands import is_owner
 import os
 import logging
 import discord
@@ -32,6 +33,12 @@ async def load_commands():
                 logger.info(f"Command loaded : {filename}")
             except Exception as e:
                 logger.error(f"Error : {e}")
+
+@is_owner()
+@bot.command()
+async def reload(ctx, cog: str):
+    await bot.reload_extension(f"commands.{cog}")
+    await ctx.send(f"Command {cog} reloaded")
 
 @bot.event
 async def on_ready():

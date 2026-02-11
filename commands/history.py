@@ -18,7 +18,7 @@ class historyCog(commands.Cog):
         await ctx.send(embed=Embeds.create_info_embed("Generating historical charts... This may take a moment."))
     
         try:
-            snapshots = engine.persistence.get_all_snapshots(engine.session_id)
+            snapshots = engine.persistence.get_sampled_snapshots(engine.session_id, max_points=100)
         
             if len(snapshots) < 2:
                 await ctx.send(embed=Embeds.create_error_embed("Not enough historical data. Run more ticks first."))
@@ -28,22 +28,22 @@ class historyCog(commands.Cog):
             for tick, world_json in snapshots:
                 world_data = json.loads(world_json)
             
-            factions_dict = {}
-            for fid, f_data in world_data['factions'].items():
-                power_total = f_data['power'].get('army', 0) + f_data['power'].get('navy', 0) + f_data['power'].get('air', 0)
-                factions_dict[fid] = {
-                    'name': f_data['name'],
-                    'color': f_data.get('color', '#808080'),
-                    'power': power_total,
-                    'legitimacy': f_data.get('legitimacy', 50),
-                    'resources': f_data.get('resources', {}),
-                    'is_active': f_data.get('is_active', True)
-                }
-            
-            historical_data.append({
-                'tick': tick,
-                'factions': factions_dict
-            })
+                factions_dict = {}
+                for fid, f_data in world_data['factions'].items():
+                    power_total = f_data['power'].get('army', 0) + f_data['power'].get('navy', 0) + f_data['power'].get('air', 0)
+                    factions_dict[fid] = {
+                        'name': f_data['name'],
+                        'color': f_data.get('color', '#808080'),
+                        'power': power_total,
+                        'legitimacy': f_data.get('legitimacy', 50),
+                        'resources': f_data.get('resources', {}),
+                        'is_active': f_data.get('is_active', True)
+                    }
+                
+                historical_data.append({
+                    'tick': tick,
+                    'factions': factions_dict
+                })
         
             power_chart = MetricsVisualizer.create_power_evolution_chart(historical_data)
             await ctx.send(file=discord.File(power_chart, 'power_evolution.png'))

@@ -32,8 +32,10 @@ class WarSystem(BaseSystem):
                     if not target_owner:
                         continue
                     
+                    from core.defaults import Rules
+
                     power_ratio = attacker.power.total / max(target_owner.power.total, 1.0)
-                    victory_chance = min(power_ratio / (cfg.victory_power_ratio_threshold * 1.5), 0.9)
+                    victory_chance = min(power_ratio / (cfg.victory_power_ratio_threshold * Rules.War.VICTORY_CHANCE_FACTOR), Rules.War.VICTORY_CAP)
                     
                     if "Militarist" in attacker.traits:
                         victory_chance *= t_cfg.militarist_victory_mod
@@ -44,7 +46,7 @@ class WarSystem(BaseSystem):
                         builder.for_faction(attacker.id).add_region(target_region.id).done()
                         
                         from domains.economy import Resources
-                        cost = cfg.conquest_power_cost / 2
+                        cost = cfg.conquest_power_cost / Rules.War.CONQUEST_COST_DIVISOR
                         if "Imperialist" in attacker.traits:
                             cost *= t_cfg.imperialist_conquest_cost_mod
                         
@@ -58,13 +60,13 @@ class WarSystem(BaseSystem):
                         new_attacker_leg = min(self.config.faction.max_legitimacy, attacker.legitimacy + leg_bonus)
                         builder.for_faction(attacker.id).set_legitimacy(new_attacker_leg).done()
                         
-                        new_attacker_power = attacker.power * 0.95
+                        new_attacker_power = attacker.power * Rules.War.CONQUEST_ATTACKER_POWER_REMAINING
                         builder.for_faction(attacker.id).set_power(new_attacker_power).done()
                         
                         builder.add_event(f"🔴 WAR: {attacker.name} conquered {target_region.name} from {target_owner.name}!")
                     else:
-                        new_attacker_power = attacker.power * 0.8
-                        new_defender_power = target_owner.power * 0.9
+                        new_attacker_power = attacker.power * Rules.War.FAILED_ATTACK_ATTACKER_POWER_REMAINING
+                        new_defender_power = target_owner.power * Rules.War.FAILED_ATTACK_DEFENDER_POWER_REMAINING
                         
                         builder.for_faction(attacker.id).set_power(new_attacker_power).done()
                         builder.for_faction(target_owner.id).set_power(new_defender_power).done()
@@ -72,12 +74,13 @@ class WarSystem(BaseSystem):
                         builder.add_event(f"🔴 WAR: {attacker.name} failed to conquer {target_region.name} from {target_owner.name}.")
                 
                 elif potential_neutral:
+                    from core.defaults import Rules
                     from domains.power import Power
                     target_region = random.choice(potential_neutral)
-                    builder.for_region(target_region.id).set_owner(attacker.id).set_stability(80.0).done()
+                    builder.for_region(target_region.id).set_owner(attacker.id).set_stability(Rules.War.COLONIZATION_STABILITY).done()
                     builder.for_faction(attacker.id).add_region(target_region.id).done()
                     
-                    cost = cfg.colonization_power_cost/2
+                    cost = cfg.colonization_power_cost / Rules.War.COLONIZATION_COST_DIVISOR
                     if "Imperialist" in attacker.traits:
                         cost *= t_cfg.imperialist_conquest_cost_mod
                         
